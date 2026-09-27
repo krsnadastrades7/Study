@@ -1,0 +1,1781 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>STUDY // Workflow Engine</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Google Fonts: JetBrains Mono & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Inter"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
+          },
+          colors: {
+            oled: {
+              pitch: '#000000',
+              panel: '#09090b',
+              surface: '#121215',
+              surfaceActive: '#18181b',
+              border: '#27272a',
+              borderSubtle: '#1f1f23',
+              text: '#fafafa',
+              muted: '#71717a',
+              dim: '#52525b',
+              accent: '#38bdf8',
+              emerald: '#10b981',
+              rose: '#f43f5e',
+              amber: '#fbbf24',
+              violet: '#a78bfa'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* OLED Zero-Clutter Scrollbars */
+    ::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #000000;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #27272a;
+      border-radius: 2px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #38bdf8;
+    }
+
+    /* Tablet Touch Targets */
+    button, input, select, textarea, [role="button"] {
+      touch-action: manipulation;
+    }
+
+    /* Drag & Drop Feedback */
+    .drag-source {
+      opacity: 0.35;
+      border: 1px dashed #38bdf8 !important;
+    }
+    .drag-target-over {
+      border-color: #38bdf8 !important;
+      background-color: #121215 !important;
+    }
+  </style>
+</head>
+<body class="bg-oled-pitch text-oled-text font-sans min-h-screen selection:bg-sky-950 selection:text-sky-200 antialiased flex flex-col justify-between">
+
+  <!-- Toast Notification Center -->
+  <div id="toastContainer" class="fixed top-4 right-4 z-50 flex flex-col gap-2 max-w-sm pointer-events-none"></div>
+
+  <!-- ================= 1. TOP BAR & TELEMETRY ================= -->
+  <header class="sticky top-0 z-40 bg-oled-pitch/95 backdrop-blur border-b border-oled-border">
+    <div class="max-w-[1720px] mx-auto px-4 py-2.5 sm:px-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+      
+      <!-- Left: STUDY Title, Beta Badge, Target Countdown & Ratio Metric -->
+      <div class="flex items-center gap-3.5 flex-wrap">
+        <!-- Title: Minimalist STUDY Block Letters -->
+        <span class="font-mono font-extrabold text-xl tracking-wider text-white">STUDY</span>
+
+        <!-- Beta Badge (Clickable modal trigger) -->
+        <button onclick="openTierModal()" id="telemetryBetaBadge" class="px-2 py-0.5 rounded text-[10px] font-mono font-bold tracking-wider uppercase border border-emerald-500/40 bg-emerald-950/40 text-emerald-400 hover:border-emerald-400 transition-all flex items-center gap-1.5 active:scale-95" title="View Beta Cohort & Tier Architecture">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span>[BETA PASS: ACTIVE]</span>
+        </button>
+
+        <!-- Target Date Countdown Picker (Defaults to May 03) -->
+        <input type="date" id="targetDateInput" onchange="handleTargetDateChange(this.value)" class="sr-only">
+        <button onclick="document.getElementById('targetDateInput').showPicker ? document.getElementById('targetDateInput').showPicker() : document.getElementById('targetDateInput').click()" class="h-9 px-3 rounded bg-oled-panel border border-oled-border hover:border-oled-accent text-xs font-mono flex items-center gap-2 transition-all active:scale-95" title="Change Target Exam Date">
+          <span class="text-oled-muted">TARGET:</span>
+          <span id="targetDateDisplay" class="font-bold text-white">MAY 03</span>
+          <span id="targetDaysCountdown" class="text-[10px] text-sky-400 font-bold bg-sky-950/60 px-1.5 py-0.2 rounded border border-sky-800/60">0d</span>
+        </button>
+
+        <!-- Live RATIO Metric Tag (Practice vs Lecture) -->
+        <div id="ratioBadgeContainer" class="h-9 px-2.5 rounded bg-oled-panel border border-emerald-500/40 text-xs font-mono flex items-center gap-1.5" title="Active Practice Minutes / Passive Lecture Minutes (Goal >= 0.50)">
+          <span class="text-oled-muted text-[11px]">RATIO:</span>
+          <span id="ratioMetricValue" class="font-bold text-emerald-400">0.00</span>
+          <span id="ratioMetricStatus" class="text-[9px] uppercase font-bold text-emerald-400 px-1 py-0.2 rounded bg-emerald-950/50">BALANCED</span>
+        </div>
+
+        <!-- Overdue Tasks Midnight Alert Trigger -->
+        <button onclick="openMidnightActionModal()" id="midnightTriggerBtn" class="hidden h-9 px-2.5 rounded bg-rose-950/40 border border-rose-500/40 text-rose-400 text-xs font-mono font-bold hover:border-rose-400 transition-all flex items-center gap-1.5 animate-pulse">
+          <span>🌙</span>
+          <span id="midnightOverdueCount">0 Overdue</span>
+          <span class="text-[10px] text-rose-300 underline ml-0.5">Triage</span>
+        </button>
+      </div>
+
+      <!-- Center: Practice vs Lecture Live Telemetry Bar -->
+      <div class="flex-1 max-w-md w-full px-1">
+        <div class="flex items-center justify-between text-[11px] font-mono mb-1 text-oled-muted">
+          <span>PRACTICE VS LECTURE: <strong id="ratioDetailText" class="text-white">0h vs 0h</strong></span>
+          <span id="telemetryPaceText" class="text-sky-400 font-bold">Pace: 0h/day</span>
+        </div>
+        <!-- Dual Tone Split Telemetry Bar -->
+        <div class="w-full bg-[#18181b] rounded h-2 overflow-hidden flex border border-oled-border">
+          <div id="telemetryPracticeBar" class="h-full bg-emerald-500 transition-all duration-500" style="width: 50%" title="Practice Ratio"></div>
+          <div id="telemetryLectureBar" class="h-full bg-sky-500 transition-all duration-500" style="width: 50%" title="Lecture Ratio"></div>
+        </div>
+      </div>
+
+      <!-- Top-Right Corner (Tucked away): Stopwatch & Telemetry Totals -->
+      <div class="flex items-center justify-end gap-3 flex-shrink-0">
+        
+        <!-- Stopwatch / Focus Timer -->
+        <div class="flex items-center bg-oled-panel border border-oled-border px-2.5 py-1 rounded gap-2 text-xs font-mono">
+          <span id="stopwatchDisplay" class="font-bold text-white text-xs">00:00:00</span>
+          <button id="timerToggleBtn" onclick="toggleStopwatch()" class="w-7 h-7 rounded bg-oled-surface hover:bg-oled-surfaceActive text-white flex items-center justify-center font-bold text-xs active:scale-90 transition-all" title="Start/Pause Timer">
+            ▶
+          </button>
+          <button onclick="resetStopwatch()" class="w-7 h-7 rounded hover:bg-oled-surface text-oled-muted hover:text-white flex items-center justify-center text-xs active:scale-90 transition-all" title="Reset Timer">
+            ↺
+          </button>
+        </div>
+
+        <!-- Subtle Logged Hours Stats -->
+        <div class="hidden sm:flex flex-col text-right font-mono text-[11px] text-oled-muted leading-tight border-l border-oled-border pl-3">
+          <div>Today: <strong id="loggedTodayText" class="text-white">0h 00m</strong></div>
+          <div class="text-[10px] text-oled-dim">7-Day: <span id="loggedWeekText" class="text-oled-muted">0h 00m</span></div>
+        </div>
+
+      </div>
+
+    </div>
+  </header>
+
+  <!-- ================= CONSECUTIVE DEFICIT WARNING ALERT ================= -->
+  <div id="ratioDeficitAlertBanner" class="hidden bg-rose-950/60 border-b border-rose-500/50 px-4 py-2 text-xs font-mono text-rose-200">
+    <div class="max-w-[1720px] mx-auto flex items-center justify-between gap-3">
+      <div class="flex items-center gap-2">
+        <span class="text-base">⚠️</span>
+        <span><strong>CRITICAL PRACTICE DEFICIT:</strong> Problem-solving ratio has fallen below 0.50 for 3 consecutive days. Mandatory 45-minute timed PYQ practice recommended before resuming lectures.</span>
+      </div>
+      <button onclick="quickInjectPracticeBlock()" class="px-2.5 py-1 rounded bg-rose-500 text-black font-bold uppercase text-[11px] hover:bg-rose-400 active:scale-95 flex-shrink-0">
+        Inject 45m PYQ Drill
+      </button>
+    </div>
+  </div>
+
+  <!-- ================= 2. ROLLING 7-DAY WORKLOAD MATRIX (STARTING TODAY) ================= -->
+  <section class="max-w-[1720px] w-full mx-auto px-4 sm:px-6 pt-4 pb-2">
+    <div class="bg-oled-panel border border-oled-border rounded-lg p-3.5">
+      <div class="flex items-center justify-between gap-3 mb-2.5">
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-mono font-bold uppercase tracking-wider text-white">Rolling 7-Day Workload Matrix</span>
+          <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-oled-surface border border-oled-border text-oled-accent font-bold">Dynamic Horizon</span>
+        </div>
+        <div class="flex items-center gap-3 text-xs font-mono text-oled-muted">
+          <span>Daily Cap: <strong class="text-white font-mono">8h 30m</strong></span>
+          <button onclick="rebalanceWaterfallSchedule(true)" class="text-sky-400 hover:underline font-bold text-[11px]">⚡ Waterfall Rebalance</button>
+        </div>
+      </div>
+
+      <!-- 7 Horizontal Sliding Horizon Day Cards -->
+      <div id="rollingMatrixRow" class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2 overflow-x-auto pb-1">
+        <!-- Dynamically populated starting D0 (Today) -> D6 -->
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= MAIN TABLET / DESKTOP SPLIT COCKPIT ================= -->
+  <main class="flex-1 max-w-[1720px] w-full mx-auto p-4 sm:px-6 sm:py-3">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+      
+      <!-- ================= LEFT COLUMN: TODAY'S ACTIVE WORKLOAD QUEUE (7 Cols) ================= -->
+      <section class="lg:col-span-7 flex flex-col gap-4">
+        
+        <!-- Queue Header Card -->
+        <div class="bg-oled-panel border border-oled-border rounded-lg p-4 sm:p-5">
+          <div class="flex items-center justify-between gap-3 mb-4 pb-3 border-b border-oled-border">
+            <div>
+              <div class="flex items-center gap-2">
+                <h2 class="text-base sm:text-lg font-mono font-bold text-white uppercase tracking-wide">D0 Today's Workload Queue</h2>
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded uppercase font-bold bg-sky-950 text-sky-400 border border-sky-800">Cockpit</span>
+              </div>
+              <p id="todayDateLabel" class="text-xs text-oled-muted font-mono mt-0.5">Sunday, Sep 27</p>
+            </div>
+            
+            <div class="text-right font-mono text-xs text-oled-muted">
+              <div>Capacity: <strong id="todayScheduledHours" class="text-sky-400 font-bold">0h 00m</strong> / 8h 30m</div>
+              <div id="todayTasksFraction" class="text-[11px] text-oled-dim mt-0.5">0 of 0 Completed</div>
+            </div>
+          </div>
+
+          <!-- Dynamic Today's Tasks List -->
+          <div id="todayTaskList" class="flex flex-col gap-2.5 min-h-[220px]" ondragover="handleDragOver(event)">
+            <!-- Injected dynamically -->
+          </div>
+
+          <!-- Empty State -->
+          <div id="todayEmptyState" class="hidden flex-col items-center justify-center p-8 text-center border border-dashed border-oled-border rounded-lg">
+            <span class="text-xs font-mono font-bold text-white mb-1 uppercase tracking-wider">ALL D0 TARGETS COMPLETE</span>
+            <p class="text-[11px] text-oled-muted font-mono max-w-sm">Day's allocated workload has been successfully cleared. Unlocked spaced revision checkpoints scheduled.</p>
+          </div>
+        </div>
+
+        <!-- 3-BUCKET DIAGNOSTIC WEAKNESS TELEMETRY WIDGET -->
+        <div class="bg-oled-panel border border-oled-border rounded-lg p-4">
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-mono font-bold uppercase text-white tracking-wider">DPP / PYQ 3-Bucket Diagnostic</span>
+              <span class="text-[10px] font-mono px-1.5 py-0.2 rounded bg-oled-surface border border-oled-border text-emerald-400">Error Telemetry</span>
+            </div>
+            <button onclick="openDiagnosticLogModal()" class="h-8 px-2.5 rounded bg-emerald-950/60 border border-emerald-500/40 text-emerald-400 text-xs font-mono font-bold hover:border-emerald-400 transition-all active:scale-95">
+              + Log Practice Session
+            </button>
+          </div>
+
+          <!-- 3-Bucket Visual Bar -->
+          <div class="w-full bg-[#18181b] rounded h-3 overflow-hidden flex border border-oled-border mb-3">
+            <div id="bucketBarConceptual" class="h-full bg-rose-500 transition-all" style="width: 33%" title="Conceptual Gap"></div>
+            <div id="bucketBarCalculation" class="h-full bg-amber-500 transition-all" style="width: 33%" title="Calculation / Silly"></div>
+            <div id="bucketBarTime" class="h-full bg-violet-500 transition-all" style="width: 34%" title="Time / Guesswork"></div>
+          </div>
+
+          <div class="grid grid-cols-3 gap-2 text-center text-xs font-mono">
+            <div class="p-2 rounded bg-oled-surface border border-oled-border">
+              <div class="text-[10px] text-rose-400 uppercase font-bold">1. Conceptual Gap</div>
+              <div id="bucketCountConceptual" class="text-sm font-bold text-white mt-0.5">0 (0%)</div>
+              <div class="text-[9px] text-oled-dim mt-0.5">Theory review leak</div>
+            </div>
+            <div class="p-2 rounded bg-oled-surface border border-oled-border">
+              <div class="text-[10px] text-amber-400 uppercase font-bold">2. Calculation Slip</div>
+              <div id="bucketCountCalculation" class="text-sm font-bold text-white mt-0.5">0 (0%)</div>
+              <div class="text-[9px] text-oled-dim mt-0.5">Rough sheet discipline</div>
+            </div>
+            <div class="p-2 rounded bg-oled-surface border border-oled-border">
+              <div class="text-[10px] text-violet-400 uppercase font-bold">3. Time Pressure</div>
+              <div id="bucketCountTime" class="text-sm font-bold text-white mt-0.5">0 (0%)</div>
+              <div class="text-[9px] text-oled-dim mt-0.5">Speed / Panic guess</div>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ================= RIGHT COLUMN: TRIAGE ENGINE, SPLITTER & INPUT (5 Cols) ================= -->
+      <section class="lg:col-span-5 flex flex-col gap-4">
+        
+        <!-- 9. EMERGENCY SYLLABUS TRIAGE ENGINE (ROI TIERS A / B / C) -->
+        <div class="bg-oled-panel border border-oled-border rounded-lg p-4">
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-mono font-bold uppercase tracking-wider text-white">Emergency Syllabus Triage</span>
+              <span class="text-[10px] font-mono px-1.5 py-0.2 rounded bg-rose-950/60 border border-rose-500/40 text-rose-300 font-bold">ROI Engine</span>
+            </div>
+            <span id="triageForecastBadge" class="text-[11px] font-mono text-oled-muted">Capacity OK</span>
+          </div>
+
+          <!-- Tiers Filter Switcher -->
+          <div class="grid grid-cols-3 gap-1 bg-oled-pitch p-1 rounded border border-oled-border text-center text-xs font-mono mb-3">
+            <button onclick="setTriageTab('A')" id="triageTabA" class="py-1.5 rounded font-bold transition-all bg-oled-surface text-sky-400 border border-oled-border">
+              Tier-A Core
+            </button>
+            <button onclick="setTriageTab('B')" id="triageTabB" class="py-1.5 rounded font-bold transition-all text-oled-muted hover:text-white">
+              Tier-B Drill
+            </button>
+            <button onclick="setTriageTab('C')" id="triageTabC" class="py-1.5 rounded font-bold transition-all text-oled-muted hover:text-white">
+              Tier-C Bailout
+            </button>
+          </div>
+
+          <!-- Triage Tab Description -->
+          <div id="triageDescText" class="text-[11px] font-mono text-oled-muted mb-2.5">
+            [Tier-A Core]: Foundational, high-yield chapters (Mechanics, Optics, GOC, Genetics). Non-negotiable.
+          </div>
+
+          <!-- Triage Items List -->
+          <div id="triageListContainer" class="flex flex-col gap-1.5 max-h-[220px] overflow-y-auto pr-1">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+        <!-- 7. MARATHON ONE-SHOT AUTO-SPLITTER TOOL -->
+        <div class="bg-oled-panel border border-oled-border rounded-lg p-4">
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-mono font-bold uppercase tracking-wider text-white">Marathon One-Shot Splitter</span>
+              <span class="text-[10px] font-mono px-1.5 py-0.2 rounded bg-sky-950 text-sky-400 border border-sky-800">Chunking</span>
+            </div>
+            <button type="button" onclick="toggleSplitterForm()" id="splitterFormToggleBtn" class="text-xs font-mono text-sky-400 hover:underline">
+              Open Form ▼
+            </button>
+          </div>
+
+          <form id="marathonSplitForm" onsubmit="handleMarathonSplit(event)" class="hidden flex-col gap-3 pt-2 border-t border-oled-border">
+            <div>
+              <label class="block text-[10px] font-mono text-oled-muted mb-1 uppercase">One-Shot Video Title</label>
+              <input type="text" id="splitTitle" required placeholder="e.g., Electrostatics Complete 8hr One-Shot" class="w-full bg-oled-pitch border border-oled-border rounded px-3 py-2 text-xs text-white focus:outline-none focus:border-oled-accent font-mono min-h-[44px]">
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-[10px] font-mono text-oled-muted mb-1 uppercase">Subject</label>
+                <select id="splitSubject" class="w-full bg-oled-pitch border border-oled-border rounded px-2.5 py-2 text-xs text-white focus:outline-none focus:border-oled-accent font-mono min-h-[44px]">
+                  <option value="Physics">Physics</option>
+                  <option value="Chemistry">Chemistry</option>
+                  <option value="Botany">Botany</option>
+                  <option value="Zoology">Zoology</option>
+                  <option value="Mathematics">Mathematics</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-[10px] font-mono text-oled-muted mb-1 uppercase">Total Video Duration</label>
+                <div class="grid grid-cols-2 gap-1.5">
+                  <input type="number" id="splitHours" min="1" max="30" value="8" placeholder="8" class="w-full bg-oled-pitch border border-oled-border rounded px-2 py-2 text-xs text-white font-mono text-center min-h-[44px]">
+                  <input type="number" id="splitMins" min="0" max="59" value="0" placeholder="0" class="w-full bg-oled-pitch border border-oled-border rounded px-2 py-2 text-xs text-white font-mono text-center min-h-[44px]">
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-[10px] font-mono text-oled-muted mb-1 uppercase">YouTube URL</label>
+              <input type="text" id="splitUrl" placeholder="https://www.youtube.com/watch?v=..." class="w-full bg-oled-pitch border border-oled-border rounded px-3 py-2 text-xs text-white focus:outline-none focus:border-oled-accent font-mono min-h-[44px]">
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 bg-oled-pitch p-2.5 rounded border border-oled-border text-xs font-mono">
+              <div>
+                <span class="block text-[10px] text-oled-muted uppercase mb-1">Speed Multiplier</span>
+                <select id="splitSpeed" class="w-full bg-oled-surface border border-oled-border rounded px-2 py-1 text-xs text-white font-mono">
+                  <option value="1.0">1.0x</option>
+                  <option value="1.25">1.25x</option>
+                  <option value="1.5" selected>1.5x</option>
+                  <option value="1.75">1.75x</option>
+                  <option value="2.0">2.0x</option>
+                </select>
+              </div>
+
+              <div>
+                <span class="block text-[10px] text-oled-muted uppercase mb-1">Daily Chunk Size</span>
+                <select id="splitChunkSize" class="w-full bg-oled-surface border border-oled-border rounded px-2 py-1 text-xs text-white font-mono">
+                  <option value="1.5">1.5 Hours</option>
+                  <option value="2.0" selected>2.0 Hours</option>
+                  <option value="2.5">2.5 Hours</option>
+                  <option value="3.0">3.0 Hours</option>
+                </select>
+              </div>
+            </div>
+
+            <button type="submit" class="w-full py-2.5 rounded bg-sky-500 hover:bg-sky-400 text-black font-mono font-bold text-xs uppercase tracking-wider transition-all active:scale-95 min-h-[44px]">
+              Slice Into Sequential Daily Chunks (&t=...)
+            </button>
+          </form>
+        </div>
+
+        <!-- QUICK INPUT TASK / LECTURE PANEL -->
+        <div class="bg-oled-panel border border-oled-border rounded-lg p-4">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs font-mono font-bold uppercase tracking-wider text-white">+ Add Custom Task / DPP</span>
+            <span class="text-[11px] font-mono text-oled-muted">Syllabus Input</span>
+          </div>
+
+          <form id="quickAddForm" onsubmit="handleQuickAdd(event)" class="flex flex-col gap-3">
+            <div>
+              <input type="text" id="addQuickTitle" required placeholder="Task title (e.g., Electrochemistry Nernst Eq & DPP)" class="w-full bg-oled-pitch border border-oled-border rounded px-3 py-2 text-xs text-white focus:outline-none focus:border-oled-accent font-mono min-h-[44px]">
+            </div>
+
+            <div class="grid grid-cols-3 gap-2">
+              <div>
+                <select id="addQuickSubject" class="w-full bg-oled-pitch border border-oled-border rounded px-2 py-2 text-xs text-white font-mono min-h-[44px]">
+                  <option value="Physics">Physics</option>
+                  <option value="Chemistry">Chemistry</option>
+                  <option value="Botany">Botany</option>
+                  <option value="Zoology">Zoology</option>
+                  <option value="Mathematics">Maths</option>
+                </select>
+              </div>
+
+              <div>
+                <select id="addQuickType" class="w-full bg-oled-pitch border border-oled-border rounded px-2 py-2 text-xs text-white font-mono min-h-[44px]">
+                  <option value="lecture">Lecture</option>
+                  <option value="practice" selected>Practice / DPP</option>
+                  <option value="revision">Revision</option>
+                </select>
+              </div>
+
+              <div>
+                <select id="addQuickTier" class="w-full bg-oled-pitch border border-oled-border rounded px-2 py-2 text-xs text-white font-mono min-h-[44px]">
+                  <option value="A">Tier-A Core</option>
+                  <option value="B">Tier-B Drill</option>
+                  <option value="C">Tier-C Bailout</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+              <div class="relative">
+                <input type="number" id="addQuickDuration" min="15" max="360" value="60" class="w-full bg-oled-pitch border border-oled-border rounded px-3 py-2 text-xs text-white font-mono min-h-[44px] pr-10">
+                <span class="absolute right-2.5 top-3 text-[10px] font-mono text-oled-muted">mins</span>
+              </div>
+
+              <div>
+                <input type="text" id="addQuickUrl" placeholder="YouTube URL (Optional)" class="w-full bg-oled-pitch border border-oled-border rounded px-3 py-2 text-xs text-white font-mono min-h-[44px]">
+              </div>
+            </div>
+
+            <button type="submit" class="w-full py-2.5 rounded bg-oled-surface border border-oled-border hover:border-oled-accent text-white font-mono font-bold text-xs uppercase transition-all active:scale-95 min-h-[44px]">
+              Add Task to Active Horizon
+            </button>
+          </form>
+        </div>
+
+      </section>
+
+    </div>
+  </main>
+
+  <!-- ================= DISCRETE FOOTER: BACKUP & DATA CONTROLS ================= -->
+  <footer class="border-t border-oled-border py-4 mt-8 bg-oled-pitch">
+    <div class="max-w-[1720px] mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-mono text-oled-muted">
+      <div class="flex items-center gap-2">
+        <span class="text-white font-bold">STUDY</span>
+        <span>•</span>
+        <span>OLED Workflow Cockpit</span>
+        <span>•</span>
+        <button onclick="openTierModal()" class="text-emerald-400 hover:underline">Tier Specs</button>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <button onclick="exportDataJson()" class="hover:text-white transition-colors underline min-h-[44px] flex items-center">Export Data (JSON)</button>
+        <span>•</span>
+        <label class="hover:text-white transition-colors underline cursor-pointer min-h-[44px] flex items-center">
+          Import Data (JSON)
+          <input type="file" id="importFileInput" onchange="importDataJson(event)" accept=".json" class="hidden">
+        </label>
+        <span>•</span>
+        <button onclick="resetData()" class="hover:text-rose-400 transition-colors underline min-h-[44px] flex items-center">Reset Defaults</button>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ================= 4. MIDNIGHT ACTION CARD / TRIAGE MODAL ================= -->
+  <div id="midnightModal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-oled-panel border border-oled-border rounded-xl max-w-lg w-full p-5 sm:p-6 shadow-2xl">
+      <div class="flex items-center justify-between pb-3 border-b border-oled-border mb-4">
+        <div class="flex items-center gap-2">
+          <span class="text-xl">🌙</span>
+          <div>
+            <h3 class="text-sm font-mono font-bold text-white uppercase tracking-wider">Midnight Rapid Triage</h3>
+            <p class="text-[11px] text-oled-muted font-mono">Day boundary reached with incomplete tasks.</p>
+          </div>
+        </div>
+        <button onclick="closeMidnightModal()" class="text-oled-muted hover:text-white text-base">✕</button>
+      </div>
+
+      <div class="mb-4">
+        <div class="text-xs font-mono text-rose-300 bg-rose-950/40 border border-rose-500/40 p-3 rounded mb-3">
+          <strong><span id="midnightPendingCount">0</span> Incomplete Tasks</strong> detected from yesterday / previous slots.
+        </div>
+        <div id="midnightTaskList" class="flex flex-col gap-1.5 max-h-[160px] overflow-y-auto pr-1 text-xs font-mono">
+          <!-- Dynamically populated overdue items -->
+        </div>
+      </div>
+
+      <!-- 1-Tap 30-Second Actions -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2 border-t border-oled-border">
+        <button onclick="executeMidnightAction('waterfall')" class="p-3 rounded bg-sky-950/60 border border-sky-500/50 hover:bg-sky-900/60 text-sky-300 font-mono text-xs font-bold flex flex-col items-center text-center gap-1 active:scale-95">
+          <span>⚡ Waterfall Push</span>
+          <span class="text-[9px] text-oled-muted font-normal">Chunk into 30-45m across 5-7 days</span>
+        </button>
+
+        <button onclick="executeMidnightAction('tomorrow')" class="p-3 rounded bg-oled-surface border border-oled-border hover:border-oled-accent text-white font-mono text-xs font-bold flex flex-col items-center text-center gap-1 active:scale-95">
+          <span>📅 Re-Slot Tomorrow</span>
+          <span class="text-[9px] text-oled-muted font-normal">Push into D1 queue</span>
+        </button>
+
+        <button onclick="executeMidnightAction('purge')" class="p-3 rounded bg-rose-950/40 border border-rose-500/40 hover:bg-rose-900/40 text-rose-300 font-mono text-xs font-bold flex flex-col items-center text-center gap-1 active:scale-95">
+          <span>🗑 Drop / Purge</span>
+          <span class="text-[9px] text-oled-muted font-normal">Move to Tier-C archive</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 8. STANDARDIZED DPP / PYQ 3-BUCKET DIAGNOSTIC MODAL ================= -->
+  <div id="diagnosticModal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-oled-panel border border-oled-border rounded-xl max-w-md w-full p-5 shadow-2xl">
+      <div class="flex items-center justify-between pb-3 border-b border-oled-border mb-4">
+        <h3 class="text-sm font-mono font-bold text-white uppercase tracking-wider">Log Practice Diagnostics</h3>
+        <button onclick="closeDiagnosticLogModal()" class="text-oled-muted hover:text-white text-base">✕</button>
+      </div>
+
+      <form onsubmit="handleSaveDiagnostic(event)" class="flex flex-col gap-3.5 text-xs font-mono">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[10px] text-oled-muted uppercase mb-1">Questions Attempted</label>
+            <input type="number" id="diagAttempted" min="1" max="200" value="30" oninput="calculateDiagnosticErrors()" required class="w-full bg-oled-pitch border border-oled-border rounded p-2 text-white font-mono min-h-[40px]">
+          </div>
+          <div>
+            <label class="block text-[10px] text-oled-muted uppercase mb-1">Correct Questions</label>
+            <input type="number" id="diagCorrect" min="0" max="200" value="21" oninput="calculateDiagnosticErrors()" required class="w-full bg-oled-pitch border border-oled-border rounded p-2 text-white font-mono min-h-[40px]">
+          </div>
+        </div>
+
+        <div class="p-2.5 rounded bg-oled-surface border border-oled-border flex items-center justify-between">
+          <span>Total Incorrect Mistakes:</span>
+          <strong id="diagTotalErrors" class="text-rose-400 font-mono text-sm">9 Errors</strong>
+        </div>
+
+        <!-- 3-Bucket Breakdown Inputs -->
+        <div class="flex flex-col gap-2">
+          <label class="block text-[10px] text-oled-muted uppercase">Categorize The Errors into 3 Buckets:</label>
+          
+          <div class="flex items-center justify-between gap-2 p-2 rounded bg-oled-pitch border border-oled-border">
+            <span class="text-rose-400">1. Conceptual / Theory Gap</span>
+            <input type="number" id="diagBucketConceptual" min="0" value="4" class="w-16 bg-oled-surface border border-oled-border rounded px-2 py-1 text-white text-center font-mono">
+          </div>
+
+          <div class="flex items-center justify-between gap-2 p-2 rounded bg-oled-pitch border border-oled-border">
+            <span class="text-amber-400">2. Calculation / Silly Slip</span>
+            <input type="number" id="diagBucketCalculation" min="0" value="3" class="w-16 bg-oled-surface border border-oled-border rounded px-2 py-1 text-white text-center font-mono">
+          </div>
+
+          <div class="flex items-center justify-between gap-2 p-2 rounded bg-oled-pitch border border-oled-border">
+            <span class="text-violet-400">3. Time Pressure / Guesswork</span>
+            <input type="number" id="diagBucketTime" min="0" value="2" class="w-16 bg-oled-surface border border-oled-border rounded px-2 py-1 text-white text-center font-mono">
+          </div>
+        </div>
+
+        <div class="flex gap-2 pt-2">
+          <button type="button" onclick="closeDiagnosticLogModal()" class="flex-1 py-2.5 rounded bg-oled-surface border border-oled-border text-oled-muted font-bold min-h-[44px]">Cancel</button>
+          <button type="submit" class="flex-1 py-2.5 rounded bg-emerald-500 hover:bg-emerald-400 text-black font-bold uppercase min-h-[44px]">Record Telemetry</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= 10. MONETIZATION COHORT & TIER GATING MODAL ================= -->
+  <div id="tierModal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-oled-panel border border-oled-border rounded-xl max-w-xl w-full p-5 sm:p-6 shadow-2xl">
+      <div class="flex items-center justify-between pb-3 border-b border-oled-border mb-4">
+        <div>
+          <h3 class="text-sm font-mono font-bold text-white uppercase tracking-wider">STUDY // Monetization & Tier Cohort</h3>
+          <p class="text-[11px] text-oled-muted font-mono mt-0.5">Academic Session 2026/2027 Access Pass</p>
+        </div>
+        <button onclick="closeTierModal()" class="text-oled-muted hover:text-white text-base">✕</button>
+      </div>
+
+      <!-- Admin / Tester Toggle: [Switch Mode: Free Preview / Pro Beta] -->
+      <div class="p-3.5 rounded bg-oled-pitch border border-oled-border flex items-center justify-between gap-3 mb-4">
+        <div>
+          <div class="text-xs font-mono font-bold text-white uppercase">Admin / Tester Mode Switcher</div>
+          <div class="text-[11px] font-mono text-oled-muted">Test how the workflow behaves when Pro is restricted:</div>
+        </div>
+        <button onclick="toggleUserCohort()" id="modalCohortToggleBtn" class="px-3 py-1.5 rounded font-mono text-xs font-bold transition-all border min-h-[38px]">
+          <!-- Populated dynamically -->
+        </button>
+      </div>
+
+      <!-- Comparison Matrix -->
+      <div class="border border-oled-border rounded overflow-hidden text-xs font-mono mb-4">
+        <div class="grid grid-cols-12 bg-oled-surface p-2 font-bold border-b border-oled-border">
+          <div class="col-span-6 text-oled-muted uppercase">Feature</div>
+          <div class="col-span-3 text-center text-white">Free Preview</div>
+          <div class="col-span-3 text-center text-emerald-400">Pro Beta</div>
+        </div>
+
+        <div class="divide-y divide-oled-border">
+          <div class="grid grid-cols-12 p-2 items-center">
+            <div class="col-span-6 text-oled-text">OLED Cockpit & 7-Day Workload Matrix</div>
+            <div class="col-span-3 text-center text-emerald-400 font-bold">✓ Included</div>
+            <div class="col-span-3 text-center text-emerald-400 font-bold">✓ Included</div>
+          </div>
+          <div class="grid grid-cols-12 p-2 items-center">
+            <div class="col-span-6 text-oled-text">Dynamic Waterfall 30-45m Micro-Push</div>
+            <div class="col-span-3 text-center text-oled-dim">Single-day only</div>
+            <div class="col-span-3 text-center text-emerald-400 font-bold">★ Multi-Day</div>
+          </div>
+          <div class="grid grid-cols-12 p-2 items-center">
+            <div class="col-span-6 text-oled-text">Marathon One-Shot Chunking (&t=...)</div>
+            <div class="col-span-3 text-center text-oled-dim">Max 2 / week</div>
+            <div class="col-span-3 text-center text-emerald-400 font-bold">★ Unlimited</div>
+          </div>
+          <div class="grid grid-cols-12 p-2 items-center">
+            <div class="col-span-6 text-oled-text">3-Bucket Error Diagnostic Telemetry</div>
+            <div class="col-span-3 text-center text-oled-dim">Raw score only</div>
+            <div class="col-span-3 text-center text-emerald-400 font-bold">★ 3-Bucket Deep</div>
+          </div>
+          <div class="grid grid-cols-12 p-2 items-center">
+            <div class="col-span-6 text-oled-text">Emergency Syllabus Triage (Tiers A/B/C)</div>
+            <div class="col-span-3 text-center text-oled-dim">Manual check</div>
+            <div class="col-span-3 text-center text-emerald-400 font-bold">★ Auto Forecast</div>
+          </div>
+          <div class="grid grid-cols-12 p-2 items-center">
+            <div class="col-span-6 text-oled-text">Automatic Spaced Revision Scheduler (+3, +10, +30)</div>
+            <div class="col-span-3 text-center text-oled-dim">Manual</div>
+            <div class="col-span-3 text-center text-emerald-400 font-bold">★ Auto Engine</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between text-[11px] font-mono text-oled-muted pt-2 border-t border-oled-border">
+        <span>Cohort: <strong class="text-emerald-400 font-bold">PRO_BETA_GRANDFATHERED</strong></span>
+        <button onclick="closeTierModal()" class="px-4 py-2 rounded bg-oled-surface border border-oled-border text-white font-bold">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= JAVASCRIPT APPLICATION CORE ================= -->
+  <script>
+    const STORAGE_KEY = 'study_engine_data_v4';
+
+    // --- DATE HELPERS ---
+    function getTodayString() {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+
+    function addDays(dateStr, days) {
+      const [y, m, d] = dateStr.split('-').map(Number);
+      const dt = new Date(y, m - 1, d);
+      dt.setDate(dt.getDate() + days);
+      return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
+    }
+
+    function formatShortDate(dateStr) {
+      if (!dateStr) return '';
+      const [y, m, d] = dateStr.split('-').map(Number);
+      const dt = new Date(y, m - 1, d);
+      return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
+
+    function getDayOfWeekName(dateStr) {
+      const [y, m, d] = dateStr.split('-').map(Number);
+      const dt = new Date(y, m - 1, d);
+      return dt.toLocaleDateString('en-US', { weekday: 'short' });
+    }
+
+    function daysBetween(startDateStr, endDateStr) {
+      const [y1, m1, d1] = startDateStr.split('-').map(Number);
+      const [y2, m2, d2] = endDateStr.split('-').map(Number);
+      const dt1 = new Date(y1, m1 - 1, d1);
+      const dt2 = new Date(y2, m2 - 1, d2);
+      return Math.max(1, Math.ceil((dt2 - dt1) / (1000 * 60 * 60 * 24)));
+    }
+
+    function formatHoursMins(mins) {
+      if (isNaN(mins) || mins <= 0) return '0h 00m';
+      const h = Math.floor(mins / 60);
+      const m = Math.round(mins % 60);
+      return `${h}h ${String(m).padStart(2, '0')}m`;
+    }
+
+    function extractYouTubeId(url) {
+      if (!url) return null;
+      url = url.trim();
+      if (/^[a-zA-Z0-9_-]{11}$/.test(url)) return url;
+      const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
+      return match ? match[1] : null;
+    }
+
+    function appendYouTubeTimestamp(url, seconds) {
+      if (!url || seconds <= 0) return url;
+      const cleanUrl = url.split('&t=')[0].split('?t=')[0];
+      const sep = cleanUrl.includes('?') ? '&' : '?';
+      return `${cleanUrl}${sep}t=${seconds}s`;
+    }
+
+    // Default State Initializer
+    const defaultEngineState = {
+      cohort: 'PRO_BETA_GRANDFATHERED', // 'PRO_BETA_GRANDFATHERED' or 'FREE_PREVIEW'
+      targetDate: '2027-05-03', // May 03 target date
+      dailyCapacityMinutes: 510, // 8h 30m
+      activeStream: 'NEET',
+      triageActiveTab: 'A',
+
+      // Telemetry Logs by Date
+      telemetryLogs: {
+        // 'YYYY-MM-DD': { lectureMinutes: 180, practiceMinutes: 120, attempted: 30, correct: 24 }
+      },
+
+      // 3-Bucket Error Logs
+      diagnosticSummary: {
+        totalAttempted: 120,
+        totalCorrect: 85,
+        conceptualGap: 18,
+        calculationSlip: 11,
+        timePressure: 6
+      },
+
+      // Tasks / Lectures
+      tasks: [
+        {
+          id: 'tsk_1',
+          title: 'Ray Optics: Lens Maker Formula & Aberrations',
+          subject: 'Physics',
+          tier: 'A', // Tier-A Core
+          type: 'lecture', // lecture | practice | revision
+          rawMinutes: 110,
+          speed: 1.25,
+          scheduledDate: getTodayString(),
+          completed: false,
+          youtubeUrl: 'https://www.youtube.com/watch?v=1K5S23J8q-4',
+          order: 1
+        },
+        {
+          id: 'tsk_2',
+          title: 'Ray Optics: 25 Timed PYQs & DPP Practice',
+          subject: 'Physics',
+          tier: 'A',
+          type: 'practice',
+          rawMinutes: 75,
+          speed: 1.0,
+          scheduledDate: getTodayString(),
+          completed: false,
+          youtubeUrl: '',
+          order: 2
+        },
+        {
+          id: 'tsk_3',
+          title: 'Coordination Compounds: CFT & Isomerism Lecture',
+          subject: 'Chemistry',
+          tier: 'B',
+          type: 'lecture',
+          rawMinutes: 100,
+          speed: 1.25,
+          scheduledDate: getTodayString(),
+          completed: false,
+          youtubeUrl: 'https://www.youtube.com/watch?v=2r1pQv_sample1',
+          order: 3
+        },
+        {
+          id: 'tsk_4',
+          title: 'Cell Cycle & Division: Mitosis Checkpoints PYQs',
+          subject: 'Botany',
+          tier: 'A',
+          type: 'practice',
+          rawMinutes: 60,
+          speed: 1.0,
+          scheduledDate: addDays(getTodayString(), 1),
+          completed: false,
+          youtubeUrl: '',
+          order: 4
+        },
+        {
+          id: 'tsk_5',
+          title: 'Animal Kingdom: Non-Chordates Classification Drill',
+          subject: 'Zoology',
+          tier: 'B',
+          type: 'lecture',
+          rawMinutes: 90,
+          speed: 1.5,
+          scheduledDate: addDays(getTodayString(), 2),
+          completed: false,
+          youtubeUrl: '',
+          order: 5
+        },
+        {
+          id: 'tsk_6',
+          title: 'Communication Systems: Modulation Index (Low Yield)',
+          subject: 'Physics',
+          tier: 'C',
+          type: 'lecture',
+          rawMinutes: 70,
+          speed: 1.5,
+          scheduledDate: addDays(getTodayString(), 4),
+          completed: false,
+          youtubeUrl: '',
+          order: 6
+        }
+      ]
+    };
+
+    // Load from LocalStorage
+    let state = (function() {
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          return {
+            ...defaultEngineState,
+            ...parsed,
+            diagnosticSummary: { ...defaultEngineState.diagnosticSummary, ...(parsed.diagnosticSummary || {}) }
+          };
+        }
+      } catch (e) {
+        console.error('State load error:', e);
+      }
+      return JSON.parse(JSON.stringify(defaultEngineState));
+    })();
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      } catch (e) {
+        console.error('State save error:', e);
+      }
+    }
+
+    function isPro() {
+      return state.cohort === 'PRO_BETA_GRANDFATHERED';
+    }
+
+    // --- TELEMETRY & RATIO ENGINE ---
+    /*
+      Ratio = Active Practice Minutes / Passive Lecture Minutes
+      Goal >= 0.50
+    */
+    function computeTelemetry() {
+      const todayStr = getTodayString();
+      const targetStr = state.targetDate || '2027-05-03';
+      const daysLeft = daysBetween(todayStr, targetStr);
+
+      let totalLectureMins = 0;
+      let totalPracticeMins = 0;
+
+      // Calculate across active tasks
+      state.tasks.forEach(t => {
+        const eff = Math.round(t.rawMinutes / (t.speed || 1.0));
+        if (t.type === 'lecture') {
+          totalLectureMins += eff;
+        } else if (t.type === 'practice' || t.type === 'revision') {
+          totalPracticeMins += eff;
+        }
+      });
+
+      // Avoid divide-by-zero
+      const denom = Math.max(1, totalLectureMins);
+      const ratio = totalPracticeMins / denom;
+
+      // Check consecutive deficit in telemetryLogs (last 3 days)
+      let consecutiveDeficitDays = 0;
+      for (let i = 1; i <= 3; i++) {
+        const d = addDays(todayStr, -i);
+        const log = state.telemetryLogs[d];
+        if (log && log.lectureMinutes > 0) {
+          const dayRatio = (log.practiceMinutes || 0) / log.lectureMinutes;
+          if (dayRatio < 0.50) consecutiveDeficitDays++;
+        }
+      }
+
+      // Overdue tasks count
+      const overdueTasks = state.tasks.filter(t => !t.completed && t.scheduledDate < todayStr);
+
+      return {
+        todayStr,
+        targetStr,
+        daysLeft,
+        totalLectureMins,
+        totalPracticeMins,
+        ratio: ratio.toFixed(2),
+        isBalanced: ratio >= 0.50,
+        hasConsecutiveDeficit: consecutiveDeficitDays >= 3,
+        overdueTasks
+      };
+    }
+
+    // --- 1. RENDER TOP BAR & TELEMETRY ---
+    function renderTopBar() {
+      const tel = computeTelemetry();
+
+      // Target countdown
+      document.getElementById('targetDateDisplay').textContent = formatShortDate(tel.targetStr).toUpperCase();
+      document.getElementById('targetDaysCountdown').textContent = `${tel.daysLeft}d left`;
+      document.getElementById('targetDateInput').value = tel.targetStr;
+
+      // Ratio Badge
+      const ratioValEl = document.getElementById('ratioMetricValue');
+      const ratioStatusEl = document.getElementById('ratioMetricStatus');
+      const ratioContainer = document.getElementById('ratioBadgeContainer');
+
+      ratioValEl.textContent = tel.ratio;
+      if (tel.isBalanced) {
+        ratioValEl.className = "font-bold text-emerald-400";
+        ratioStatusEl.className = "text-[9px] uppercase font-bold text-emerald-400 px-1 py-0.2 rounded bg-emerald-950/60";
+        ratioStatusEl.textContent = "BALANCED";
+        ratioContainer.className = "h-9 px-2.5 rounded bg-oled-panel border border-emerald-500/40 text-xs font-mono flex items-center gap-1.5";
+      } else {
+        ratioValEl.className = "font-bold text-rose-400";
+        ratioStatusEl.className = "text-[9px] uppercase font-bold text-rose-400 px-1 py-0.2 rounded bg-rose-950/60";
+        ratioStatusEl.textContent = "DEFICIT";
+        ratioContainer.className = "h-9 px-2.5 rounded bg-oled-panel border border-rose-500/50 text-xs font-mono flex items-center gap-1.5";
+      }
+
+      // Telemetry Bar
+      const totalCombined = Math.max(1, tel.totalPracticeMins + tel.totalLectureMins);
+      const practicePct = Math.round((tel.totalPracticeMins / totalCombined) * 100);
+      const lecturePct = 100 - practicePct;
+
+      document.getElementById('telemetryPracticeBar').style.width = `${practicePct}%`;
+      document.getElementById('telemetryLectureBar').style.width = `${lecturePct}%`;
+      document.getElementById('ratioDetailText').textContent = `${formatHoursMins(tel.totalPracticeMins)} prac vs ${formatHoursMins(tel.totalLectureMins)} lec`;
+
+      // Pace
+      const pendingMins = state.tasks.filter(t => !t.completed).reduce((acc, t) => acc + Math.round(t.rawMinutes / (t.speed || 1.0)), 0);
+      const dailyPace = Math.round(pendingMins / Math.max(1, tel.daysLeft));
+      document.getElementById('telemetryPaceText').textContent = `Pace: ${formatHoursMins(dailyPace)}/day`;
+
+      // Midnight Trigger Button
+      const midnightBtn = document.getElementById('midnightTriggerBtn');
+      if (tel.overdueTasks.length > 0) {
+        midnightBtn.classList.remove('hidden');
+        document.getElementById('midnightOverdueCount').textContent = `${tel.overdueTasks.length} Overdue`;
+      } else {
+        midnightBtn.classList.add('hidden');
+      }
+
+      // Consecutive Deficit Alert
+      const alertBanner = document.getElementById('ratioDeficitAlertBanner');
+      if (tel.hasConsecutiveDeficit) {
+        alertBanner.classList.remove('hidden');
+      } else {
+        alertBanner.classList.add('hidden');
+      }
+
+      // Beta Badge
+      const badge = document.getElementById('telemetryBetaBadge');
+      if (isPro()) {
+        badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span><span>[BETA PASS: ACTIVE]</span>`;
+        badge.className = "px-2 py-0.5 rounded text-[10px] font-mono font-bold tracking-wider uppercase border border-emerald-500/40 bg-emerald-950/40 text-emerald-400 hover:border-emerald-400 transition-all flex items-center gap-1.5";
+      } else {
+        badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span><span>[FREE TIER: PREVIEW]</span>`;
+        badge.className = "px-2 py-0.5 rounded text-[10px] font-mono font-bold tracking-wider uppercase border border-amber-500/40 bg-amber-950/40 text-amber-400 hover:border-amber-400 transition-all flex items-center gap-1.5";
+      }
+    }
+
+    // --- 2. RENDER ROLLING 7-DAY WORKLOAD MATRIX ---
+    function renderRollingMatrix() {
+      const container = document.getElementById('rollingMatrixRow');
+      const todayStr = getTodayString();
+      const capMins = state.dailyCapacityMinutes || 510; // 8h 30m
+
+      let html = '';
+
+      for (let offset = 0; offset < 7; offset++) {
+        const dateStr = addDays(todayStr, offset);
+        const isToday = (offset === 0);
+        const dayName = getDayOfWeekName(dateStr);
+        const shortDate = formatShortDate(dateStr);
+
+        // Calculate tasks scheduled for this day
+        const dayTasks = state.tasks.filter(t => t.scheduledDate === dateStr);
+        const dayWorkloadMins = dayTasks.reduce((acc, t) => acc + Math.round(t.rawMinutes / (t.speed || 1.0)), 0);
+        const fillPct = Math.min(100, Math.round((dayWorkloadMins / capMins) * 100));
+
+        const isOverloaded = dayWorkloadMins > capMins;
+
+        html += `
+          <div class="rounded bg-oled-surface border p-2 flex flex-col justify-between transition-all min-h-[110px] ${
+            isToday 
+              ? 'border-sky-500/80 bg-sky-950/20' 
+              : 'border-oled-border hover:border-oled-dim'
+          }" 
+          ondragover="handleDayDragOver(event)" 
+          ondrop="handleDayDrop(event, '${dateStr}')">
+            
+            <div>
+              <div class="flex items-center justify-between gap-1 mb-1">
+                <span class="text-xs font-mono font-bold ${isToday ? 'text-sky-400' : 'text-white'}">
+                  ${isToday ? 'D0 (Today)' : `D${offset} (${dayName})`}
+                </span>
+                <span class="text-[10px] font-mono text-oled-muted">${shortDate}</span>
+              </div>
+
+              <div class="text-[11px] font-mono text-white mb-2">
+                <strong class="${isOverloaded ? 'text-rose-400 font-bold' : 'text-white'}">${formatHoursMins(dayWorkloadMins)}</strong>
+                <span class="text-[10px] text-oled-muted">/ 8h 30m</span>
+              </div>
+
+              <!-- Capacity Fill Bar -->
+              <div class="w-full bg-[#27272a] rounded h-1.5 overflow-hidden mb-2">
+                <div class="h-full ${isOverloaded ? 'bg-rose-500' : fillPct > 75 ? 'bg-amber-400' : 'bg-sky-400'} transition-all" style="width: ${fillPct}%"></div>
+              </div>
+
+              <!-- Task Counts -->
+              <div class="text-[10px] font-mono text-oled-muted flex items-center justify-between">
+                <span>${dayTasks.length} tasks scheduled</span>
+                ${isOverloaded ? '<span class="text-rose-400 font-bold uppercase text-[9px]">Cap Max!</span>' : ''}
+              </div>
+            </div>
+
+            <button onclick="setFocusDateFilter('${dateStr}')" class="mt-2 w-full py-1 text-[10px] font-mono text-center rounded bg-oled-pitch hover:bg-oled-surfaceActive text-oled-muted hover:text-white border border-oled-border">
+              View Queue
+            </button>
+          </div>
+        `;
+      }
+
+      container.innerHTML = html;
+    }
+
+    // --- RENDER TODAY'S WORKLOAD QUEUE ---
+    let activeFocusDate = getTodayString();
+
+    function setFocusDateFilter(dStr) {
+      activeFocusDate = dStr;
+      renderTodayQueue();
+    }
+
+    function renderTodayQueue() {
+      const container = document.getElementById('todayTaskList');
+      const emptyState = document.getElementById('todayEmptyState');
+      const todayStr = getTodayString();
+
+      document.getElementById('todayDateLabel').textContent = `${getDayOfWeekName(activeFocusDate)}, ${formatShortDate(activeFocusDate)} • Horizon Cockpit`;
+
+      let queueTasks = state.tasks
+        .filter(t => t.scheduledDate === activeFocusDate)
+        .sort((a, b) => (a.order || 0) - (b.order || 0));
+
+      const totalMins = queueTasks.reduce((acc, t) => acc + Math.round(t.rawMinutes / (t.speed || 1.0)), 0);
+      const completedCount = queueTasks.filter(t => t.completed).length;
+
+      document.getElementById('todayScheduledHours').textContent = formatHoursMins(totalMins);
+      document.getElementById('todayTasksFraction').textContent = `${completedCount} of ${queueTasks.length} Completed`;
+
+      if (queueTasks.length === 0) {
+        container.innerHTML = '';
+        emptyState.classList.remove('hidden');
+        return;
+      }
+
+      emptyState.classList.add('hidden');
+
+      let html = '';
+      queueTasks.forEach(task => {
+        const speed = task.speed || 1.0;
+        const eff = Math.round(task.rawMinutes / speed);
+        const ytId = extractYouTubeId(task.youtubeUrl);
+        const ytWebUrl = task.youtubeUrl || (ytId ? `https://www.youtube.com/watch?v=${ytId}` : '');
+
+        // Badge styling for Subject & Type
+        const isPractice = (task.type === 'practice');
+        const isRevision = (task.type === 'revision');
+
+        html += `
+          <div class="bg-oled-surface border border-oled-border rounded p-3 transition-all hover:border-oled-dim flex flex-col gap-2 relative ${task.completed ? 'opacity-50' : ''}"
+               draggable="true"
+               ondragstart="handleTaskDragStart(event, '${task.id}')"
+               ondragend="handleTaskDragEnd(event)">
+            
+            <div class="flex items-start gap-3">
+              <!-- Touch Checkbox (>= 48px hit target) -->
+              <button onclick="toggleTaskCompletion('${task.id}')" class="min-h-[48px] min-w-[48px] rounded border border-oled-border hover:border-sky-400 bg-oled-pitch flex items-center justify-center flex-shrink-0 active:scale-95 transition-all" title="Mark Done">
+                <div class="w-5 h-5 rounded border ${task.completed ? 'bg-emerald-500 border-emerald-500 text-black' : 'border-oled-dim'} flex items-center justify-center font-bold text-xs">
+                  ${task.completed ? '✓' : ''}
+                </div>
+              </button>
+
+              <!-- Main Task Content -->
+              <div class="flex-1 min-w-0 pt-0.5">
+                <div class="flex items-center gap-2 mb-1 flex-wrap">
+                  <span class="text-[10px] font-mono font-bold uppercase px-1.5 py-0.2 rounded bg-oled-pitch border border-oled-border text-oled-muted">
+                    ${task.subject}
+                  </span>
+                  
+                  <span class="text-[10px] font-mono px-1.5 py-0.2 rounded font-bold uppercase border ${
+                    isPractice ? 'bg-emerald-950/60 text-emerald-400 border-emerald-800' :
+                    isRevision ? 'bg-purple-950/60 text-purple-400 border-purple-800' :
+                    'bg-sky-950/60 text-sky-400 border-sky-800'
+                  }">
+                    ${task.type}
+                  </span>
+
+                  <span class="text-[10px] font-mono px-1.5 py-0.2 rounded font-bold border border-oled-border text-oled-dim">
+                    Tier-${task.tier || 'A'}
+                  </span>
+
+                  <span class="text-xs font-mono text-oled-muted">
+                    ${formatHoursMins(task.rawMinutes)} ➔ <strong class="text-sky-400 font-bold">${formatHoursMins(eff)}</strong>
+                  </span>
+                </div>
+
+                <h3 class="text-sm font-semibold text-white leading-snug line-clamp-2 ${task.completed ? 'line-through text-oled-muted' : ''}">
+                  ${task.title}
+                </h3>
+              </div>
+
+              <!-- Reorder Buttons (▲ / ▼) -->
+              <div class="flex flex-col gap-1 flex-shrink-0">
+                <button onclick="reorderTask('${task.id}', -1)" class="w-8 h-6 rounded bg-oled-pitch hover:bg-oled-surfaceActive text-oled-muted hover:text-white flex items-center justify-center text-xs active:scale-90" title="Move Up">
+                  ▲
+                </button>
+                <button onclick="reorderTask('${task.id}', 1)" class="w-8 h-6 rounded bg-oled-pitch hover:bg-oled-surfaceActive text-oled-muted hover:text-white flex items-center justify-center text-xs active:scale-90" title="Move Down">
+                  ▼
+                </button>
+              </div>
+            </div>
+
+            <!-- Bottom Actions: Speed Override, YouTube & Reschedule -->
+            <div class="flex items-center justify-between pt-2 border-t border-oled-border/60 gap-2 flex-wrap text-xs font-mono">
+              <div class="flex items-center gap-1.5">
+                <span class="text-[10px] text-oled-muted uppercase font-bold">Speed:</span>
+                ${[1.0, 1.25, 1.5, 2.0].map(s => `
+                  <button onclick="setTaskSpeed('${task.id}', ${s})" class="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold transition-all ${
+                    speed === s ? 'bg-white text-black' : 'text-oled-muted hover:text-white'
+                  }">
+                    ${s}x
+                  </button>
+                `).join('')}
+              </div>
+
+              <div class="flex items-center gap-2">
+                ${ytWebUrl ? `
+                  <a href="${ytWebUrl}" target="_blank" rel="noopener noreferrer" class="h-8 px-2.5 rounded bg-oled-pitch border border-oled-border hover:border-oled-accent text-[11px] font-mono text-sky-400 flex items-center gap-1 active:scale-95 transition-all">
+                    <span>Watch on YouTube</span>
+                    <span>↗</span>
+                  </a>
+                ` : ''}
+
+                <button onclick="deleteTask('${task.id}')" class="w-8 h-8 rounded hover:bg-oled-pitch text-oled-dim hover:text-rose-400 flex items-center justify-center text-xs" title="Delete">
+                  ✕
+                </button>
+              </div>
+            </div>
+
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    // --- 6. SPACED REVISION SCHEDULER (+3, +10, +30) ---
+    function triggerSpacedRevisionCheckpoints(task) {
+      if (!isPro()) return; // Pro Beta feature
+
+      const todayStr = getTodayString();
+      const subject = task.subject;
+      const cleanTitle = task.title.split('[Part')[0].trim();
+
+      // Checkpoint 1: Day +3 Formula Sheet Recap (15 mins)
+      state.tasks.push({
+        id: 'rev_3_' + Date.now(),
+        title: `[Spaced Revision +3d] Formula Sheet Recap: ${cleanTitle}`,
+        subject,
+        tier: task.tier || 'A',
+        type: 'revision',
+        rawMinutes: 15,
+        speed: 1.0,
+        scheduledDate: addDays(todayStr, 3),
+        completed: false,
+        youtubeUrl: '',
+        order: state.tasks.length + 1
+      });
+
+      // Checkpoint 2: Day +10 15 Timed PYQs (30 mins)
+      state.tasks.push({
+        id: 'rev_10_' + Date.now(),
+        title: `[Spaced Revision +10d] 15 Timed PYQs Drill: ${cleanTitle}`,
+        subject,
+        tier: task.tier || 'A',
+        type: 'practice',
+        rawMinutes: 30,
+        speed: 1.0,
+        scheduledDate: addDays(todayStr, 10),
+        completed: false,
+        youtubeUrl: '',
+        order: state.tasks.length + 2
+      });
+
+      // Checkpoint 3: Day +30 Diagnostic Check (45 mins)
+      state.tasks.push({
+        id: 'rev_30_' + Date.now(),
+        title: `[Spaced Revision +30d] Diagnostic Chapter Test: ${cleanTitle}`,
+        subject,
+        tier: task.tier || 'A',
+        type: 'practice',
+        rawMinutes: 45,
+        speed: 1.0,
+        scheduledDate: addDays(todayStr, 30),
+        completed: false,
+        youtubeUrl: '',
+        order: state.tasks.length + 3
+      });
+
+      showToast(`Auto-Scheduled Spaced Revision Checkpoints (+3d, +10d, +30d) for ${cleanTitle}`, 'success');
+    }
+
+    // Toggle Task Completion
+    function toggleTaskCompletion(id) {
+      const task = state.tasks.find(t => t.id === id);
+      if (!task) return;
+
+      const todayStr = getTodayString();
+      const eff = Math.round(task.rawMinutes / (task.speed || 1.0));
+
+      task.completed = !task.completed;
+
+      if (!state.telemetryLogs[todayStr]) {
+        state.telemetryLogs[todayStr] = { lectureMinutes: 0, practiceMinutes: 0, attempted: 0, correct: 0 };
+      }
+
+      if (task.completed) {
+        task.completedAt = todayStr;
+        if (task.type === 'lecture') {
+          state.telemetryLogs[todayStr].lectureMinutes += eff;
+        } else {
+          state.telemetryLogs[todayStr].practiceMinutes += eff;
+        }
+
+        // Trigger Spaced Revision if lecture completed
+        if (task.type === 'lecture') {
+          triggerSpacedRevisionCheckpoints(task);
+        }
+      } else {
+        if (task.type === 'lecture') {
+          state.telemetryLogs[todayStr].lectureMinutes = Math.max(0, state.telemetryLogs[todayStr].lectureMinutes - eff);
+        } else {
+          state.telemetryLogs[todayStr].practiceMinutes = Math.max(0, state.telemetryLogs[todayStr].practiceMinutes - eff);
+        }
+        delete task.completedAt;
+      }
+
+      saveState();
+      renderAll();
+    }
+
+    // --- 4. DYNAMIC WATERFALL BACKLOG & MIDNIGHT ACTION CARD ---
+    function openMidnightActionModal() {
+      const tel = computeTelemetry();
+      document.getElementById('midnightPendingCount').textContent = tel.overdueTasks.length;
+
+      const container = document.getElementById('midnightTaskList');
+      container.innerHTML = tel.overdueTasks.map(t => `
+        <div class="p-2 rounded bg-oled-pitch border border-oled-border flex items-center justify-between">
+          <span class="truncate">[${t.subject}] ${t.title}</span>
+          <span class="text-oled-muted ml-2">${formatHoursMins(t.rawMinutes)}</span>
+        </div>
+      `).join('');
+
+      const modal = document.getElementById('midnightModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeMidnightModal() {
+      const modal = document.getElementById('midnightModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function executeMidnightAction(actionType) {
+      const todayStr = getTodayString();
+      const overdue = state.tasks.filter(t => !t.completed && t.scheduledDate < todayStr);
+
+      if (actionType === 'waterfall') {
+        if (!isPro()) {
+          showToast("Multi-Day Waterfall Push is a Pro Beta Feature. Switching to Tomorrow Re-slot.", 'info');
+          actionType = 'tomorrow';
+        } else {
+          // Break overdue tasks into 30-45m micro-digest blocks across upcoming 5-7 days
+          overdue.forEach((task, idx) => {
+            const spreadDay = addDays(todayStr, (idx % 6) + 1);
+            task.scheduledDate = spreadDay;
+          });
+          showToast(`Waterfall: Overdue tasks distributed into micro-digest blocks across upcoming horizon!`, 'success');
+        }
+      }
+
+      if (actionType === 'tomorrow') {
+        const tomorrow = addDays(todayStr, 1);
+        overdue.forEach(t => t.scheduledDate = tomorrow);
+        showToast(`Re-Slotted ${overdue.length} overdue tasks into Tomorrow's queue.`, 'info');
+      } else if (actionType === 'purge') {
+        overdue.forEach(t => t.tier = 'C'); // Downgrade to Tier-C
+        showToast(`Downgraded ${overdue.length} tasks to Tier-C Bailout archive.`, 'info');
+      }
+
+      saveState();
+      closeMidnightModal();
+      renderAll();
+    }
+
+    // Rebalance Waterfall Engine manually
+    function rebalanceWaterfallSchedule(showNotification = true) {
+      const todayStr = getTodayString();
+      const capMins = state.dailyCapacityMinutes || 510;
+      const pending = state.tasks.filter(t => !t.completed).sort((a, b) => (a.order || 0) - (b.order || 0));
+
+      let currDate = todayStr;
+      let currDayMins = 0;
+
+      pending.forEach(t => {
+        const eff = Math.round(t.rawMinutes / (t.speed || 1.0));
+        if (currDayMins + eff > capMins) {
+          currDate = addDays(currDate, 1);
+          currDayMins = 0;
+        }
+        t.scheduledDate = currDate;
+        currDayMins += eff;
+      });
+
+      saveState();
+      renderAll();
+      if (showNotification) showToast("Waterfall schedule smoothed across horizon within 8h 30m daily cap.", 'success');
+    }
+
+    // --- 7. MARATHON ONE-SHOT AUTO-SPLITTER TOOL ---
+    function toggleSplitterForm() {
+      const form = document.getElementById('marathonSplitForm');
+      const btn = document.getElementById('splitterFormToggleBtn');
+      form.classList.toggle('hidden');
+      form.classList.toggle('flex');
+      btn.textContent = form.classList.contains('hidden') ? 'Open Form ▼' : 'Close Form ▲';
+    }
+
+    function handleMarathonSplit(e) {
+      e.preventDefault();
+      const title = document.getElementById('splitTitle').value.trim();
+      const subject = document.getElementById('splitSubject').value;
+      const hours = parseInt(document.getElementById('splitHours').value) || 0;
+      const mins = parseInt(document.getElementById('splitMins').value) || 0;
+      const url = document.getElementById('splitUrl').value.trim();
+      const speed = parseFloat(document.getElementById('splitSpeed').value) || 1.5;
+      const chunkHours = parseFloat(document.getElementById('splitChunkSize').value) || 2.0;
+
+      const totalRawMins = (hours * 60) + mins;
+      const effectiveTotalMins = Math.round(totalRawMins / speed);
+      const chunkMins = Math.round(chunkHours * 60);
+
+      const totalParts = Math.ceil(effectiveTotalMins / chunkMins);
+      const todayStr = getTodayString();
+
+      let remainingDurationSec = totalRawMins * 60;
+      let resumeSec = 0;
+
+      for (let i = 1; i <= totalParts; i++) {
+        const partRawMins = Math.min(Math.round(chunkMins * speed), Math.round(remainingDurationSec / 60));
+        const startH = (resumeSec / 3600).toFixed(1).replace('.0', '');
+        const endSec = resumeSec + (partRawMins * 60);
+        const endH = (endSec / 3600).toFixed(1).replace('.0', '');
+
+        const partTitle = `${title} [Part ${i}/${totalParts} • ${startH}h-${endH}h]`;
+        const partUrl = appendYouTubeTimestamp(url, resumeSec);
+        const assignedDate = addDays(todayStr, i - 1);
+
+        state.tasks.push({
+          id: 'split_' + Date.now() + '_' + i,
+          title: partTitle,
+          subject,
+          tier: 'A',
+          type: 'lecture',
+          rawMinutes: partRawMins,
+          speed,
+          scheduledDate: assignedDate,
+          completed: false,
+          youtubeUrl: partUrl,
+          order: state.tasks.length + i
+        });
+
+        resumeSec += (partRawMins * 60);
+        remainingDurationSec -= (partRawMins * 60);
+      }
+
+      saveState();
+      renderAll();
+      toggleSplitterForm();
+      showToast(`Split into ${totalParts} sequential daily chunks with exact resume timestamps!`, 'success');
+    }
+
+    // --- 8. 3-BUCKET DIAGNOSTIC TELEMETRY ---
+    function openDiagnosticLogModal() {
+      const modal = document.getElementById('diagnosticModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeDiagnosticLogModal() {
+      const modal = document.getElementById('diagnosticModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function calculateDiagnosticErrors() {
+      const att = parseInt(document.getElementById('diagAttempted').value) || 0;
+      const cor = parseInt(document.getElementById('diagCorrect').value) || 0;
+      const err = Math.max(0, att - cor);
+      document.getElementById('diagTotalErrors').textContent = `${err} Errors`;
+    }
+
+    function handleSaveDiagnostic(e) {
+      e.preventDefault();
+      const att = parseInt(document.getElementById('diagAttempted').value) || 0;
+      const cor = parseInt(document.getElementById('diagCorrect').value) || 0;
+      const bConceptual = parseInt(document.getElementById('diagBucketConceptual').value) || 0;
+      const bCalculation = parseInt(document.getElementById('diagBucketCalculation').value) || 0;
+      const bTime = parseInt(document.getElementById('diagBucketTime').value) || 0;
+
+      state.diagnosticSummary.totalAttempted += att;
+      state.diagnosticSummary.totalCorrect += cor;
+      state.diagnosticSummary.conceptualGap += bConceptual;
+      state.diagnosticSummary.calculationSlip += bCalculation;
+      state.diagnosticSummary.timePressure += bTime;
+
+      saveState();
+      renderDiagnosticWidget();
+      closeDiagnosticLogModal();
+      showToast(`Diagnostic recorded: Analyzed ${att - cor} error root causes.`, 'success');
+    }
+
+    function renderDiagnosticWidget() {
+      const d = state.diagnosticSummary;
+      const totalErrors = Math.max(1, d.conceptualGap + d.calculationSlip + d.timePressure);
+
+      const pctC = Math.round((d.conceptualGap / totalErrors) * 100);
+      const pctS = Math.round((d.calculationSlip / totalErrors) * 100);
+      const pctT = 100 - pctC - pctS;
+
+      document.getElementById('bucketBarConceptual').style.width = `${pctC}%`;
+      document.getElementById('bucketBarCalculation').style.width = `${pctS}%`;
+      document.getElementById('bucketBarTime').style.width = `${pctT}%`;
+
+      document.getElementById('bucketCountConceptual').textContent = `${d.conceptualGap} (${pctC}%)`;
+      document.getElementById('bucketCountCalculation').textContent = `${d.calculationSlip} (${pctS}% )`;
+      document.getElementById('bucketCountTime').textContent = `${d.timePressure} (${pctT}%)`;
+    }
+
+    // --- 9. EMERGENCY SYLLABUS TRIAGE ENGINE ---
+    function setTriageTab(tier) {
+      state.triageActiveTab = tier;
+      renderTriagePanel();
+    }
+
+    function renderTriagePanel() {
+      const activeTier = state.triageActiveTab || 'A';
+      const container = document.getElementById('triageListContainer');
+      const descText = document.getElementById('triageDescText');
+
+      ['A', 'B', 'C'].forEach(t => {
+        const btn = document.getElementById(`triageTab${t}`);
+        if (t === activeTier) {
+          btn.className = "py-1.5 rounded font-bold transition-all bg-oled-surface text-sky-400 border border-oled-border";
+        } else {
+          btn.className = "py-1.5 rounded font-bold transition-all text-oled-muted hover:text-white";
+        }
+      });
+
+      if (activeTier === 'A') {
+        descText.textContent = "[Tier-A Core]: Foundational, high-yield chapters (Optics, Mechanics, GOC, Genetics). Non-negotiable.";
+      } else if (activeTier === 'B') {
+        descText.textContent = "[Tier-B Drill]: Accelerated formula & one-shot coverage (Thermodynamics, Biomolecules). Fast pass.";
+      } else {
+        descText.textContent = "[Tier-C Bailout]: Low-yield damage control / omission if exam capacity is breached. Archive or skim only.";
+      }
+
+      const tierTasks = state.tasks.filter(t => (t.tier || 'A') === activeTier);
+
+      if (tierTasks.length === 0) {
+        container.innerHTML = `<div class="text-[11px] font-mono text-oled-dim italic p-3 text-center">No tasks currently classified under Tier-${activeTier}.</div>`;
+        return;
+      }
+
+      container.innerHTML = tierTasks.map(t => `
+        <div class="p-2 rounded bg-oled-surface border border-oled-border flex items-center justify-between gap-2 text-xs font-mono">
+          <div class="min-w-0 flex items-center gap-1.5">
+            <span class="text-oled-muted text-[10px]">[${t.subject}]</span>
+            <span class="text-white truncate ${t.completed ? 'line-through text-oled-dim' : ''}">${t.title}</span>
+          </div>
+          <div class="flex items-center gap-1 flex-shrink-0">
+            <span class="text-[10px] text-oled-muted">${formatHoursMins(t.rawMinutes)}</span>
+            <button onclick="cycleTaskTier('${t.id}')" class="px-1.5 py-0.5 rounded text-[9px] font-bold border border-oled-border bg-oled-pitch text-sky-400 hover:text-white" title="Change Tier">
+              Move
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function cycleTaskTier(id) {
+      const task = state.tasks.find(t => t.id === id);
+      if (!task) return;
+      const order = ['A', 'B', 'C'];
+      const nextIdx = (order.indexOf(task.tier || 'A') + 1) % 3;
+      task.tier = order[nextIdx];
+      saveState();
+      renderTriagePanel();
+      renderTopBar();
+      showToast(`Moved "${task.title.substring(0, 20)}..." to Tier-${task.tier}`, 'info');
+    }
+
+    // Quick Add
+    function handleQuickAdd(e) {
+      e.preventDefault();
+      const title = document.getElementById('addQuickTitle').value.trim();
+      const subject = document.getElementById('addQuickSubject').value;
+      const type = document.getElementById('addQuickType').value;
+      const tier = document.getElementById('addQuickTier').value;
+      const duration = parseInt(document.getElementById('addQuickDuration').value) || 60;
+      const url = document.getElementById('addQuickUrl').value.trim();
+
+      state.tasks.push({
+        id: 'tsk_' + Date.now(),
+        title,
+        subject,
+        tier,
+        type,
+        rawMinutes: duration,
+        speed: 1.0,
+        scheduledDate: getTodayString(),
+        completed: false,
+        youtubeUrl: url,
+        order: state.tasks.length + 1
+      });
+
+      saveState();
+      renderAll();
+      document.getElementById('addQuickTitle').value = '';
+      document.getElementById('addQuickUrl').value = '';
+      showToast(`Added to active horizon: ${title}`, 'success');
+    }
+
+    function quickInjectPracticeBlock() {
+      state.tasks.push({
+        id: 'drill_' + Date.now(),
+        title: '⚡ Emergency 45-Min Timed PYQ Problem Drill',
+        subject: 'Physics',
+        tier: 'A',
+        type: 'practice',
+        rawMinutes: 45,
+        speed: 1.0,
+        scheduledDate: getTodayString(),
+        completed: false,
+        youtubeUrl: '',
+        order: 1
+      });
+      saveState();
+      renderAll();
+      showToast('Injected 45-minute timed PYQ drill into D0 queue.', 'success');
+    }
+
+    // Task Actions
+    function deleteTask(id) {
+      if (!confirm('Remove this task?')) return;
+      state.tasks = state.tasks.filter(t => t.id !== id);
+      saveState();
+      renderAll();
+    }
+
+    function setTaskSpeed(id, speedVal) {
+      const task = state.tasks.find(t => t.id === id);
+      if (!task) return;
+      task.speed = Number(speedVal);
+      saveState();
+      renderAll();
+    }
+
+    function reorderTask(id, dir) {
+      const todayTasks = state.tasks.filter(t => t.scheduledDate === activeFocusDate);
+      todayTasks.sort((a, b) => (a.order || 0) - (b.order || 0));
+
+      const idx = todayTasks.findIndex(t => t.id === id);
+      if (idx === -1) return;
+
+      const targetIdx = idx + dir;
+      if (targetIdx < 0 || targetIdx >= todayTasks.length) return;
+
+      const tempOrder = todayTasks[idx].order || idx;
+      todayTasks[idx].order = todayTasks[targetIdx].order || targetIdx;
+      todayTasks[targetIdx].order = tempOrder;
+
+      saveState();
+      renderTodayQueue();
+    }
+
+    // Drag and Drop
+    let draggedTaskId = null;
+
+    function handleTaskDragStart(e, id) {
+      draggedTaskId = id;
+      e.target.classList.add('drag-source');
+      e.dataTransfer.effectAllowed = 'move';
+    }
+
+    function handleTaskDragEnd(e) {
+      e.target.classList.remove('drag-source');
+      draggedTaskId = null;
+    }
+
+    function handleDragOver(e) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+    }
+
+    function handleDayDragOver(e) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+    }
+
+    function handleDayDrop(e, targetDateStr) {
+      e.preventDefault();
+      if (!draggedTaskId) return;
+      const task = state.tasks.find(t => t.id === draggedTaskId);
+      if (task) {
+        task.scheduledDate = targetDateStr;
+        saveState();
+        renderAll();
+        showToast(`Rescheduled to ${getDayOfWeekName(targetDateStr)}, ${formatShortDate(targetDateStr)}`, 'info');
+      }
+    }
+
+    function handleTargetDateChange(newDate) {
+      if (!newDate) return;
+      state.targetDate = newDate;
+      saveState();
+      renderAll();
+      showToast(`Target exam date set to ${formatShortDate(newDate)}`, 'success');
+    }
+
+    // --- 10. TIER MODAL & COHORT SWITCHER ---
+    function openTierModal() {
+      const modal = document.getElementById('tierModal');
+      const toggleBtn = document.getElementById('modalCohortToggleBtn');
+
+      if (isPro()) {
+        toggleBtn.className = "px-3 py-1.5 rounded font-mono text-xs font-bold transition-all border bg-emerald-950 border-emerald-500/50 text-emerald-400";
+        toggleBtn.innerHTML = "Active: PRO BETA (Click to Preview Free)";
+      } else {
+        toggleBtn.className = "px-3 py-1.5 rounded font-mono text-xs font-bold transition-all border bg-amber-950 border-amber-500/50 text-amber-400";
+        toggleBtn.innerHTML = "Active: FREE PREVIEW (Click to Unlock Pro)";
+      }
+
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeTierModal() {
+      const modal = document.getElementById('tierModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function toggleUserCohort() {
+      state.cohort = (state.cohort === 'PRO_BETA_GRANDFATHERED') ? 'FREE_PREVIEW' : 'PRO_BETA_GRANDFATHERED';
+      saveState();
+      openTierModal();
+      renderAll();
+      showToast(`Switched mode to ${state.cohort}`, 'info');
+    }
+
+    // Stopwatch Logic
+    let stopwatchInterval = null;
+    let stopwatchSeconds = 0;
+    let stopwatchRunning = false;
+
+    function formatStopwatchDigits(totalSecs) {
+      const h = Math.floor(totalSecs / 3600);
+      const m = Math.floor((totalSecs % 3600) / 60);
+      const s = totalSecs % 60;
+      return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    }
+
+    function toggleStopwatch() {
+      const btn = document.getElementById('timerToggleBtn');
+      if (stopwatchRunning) {
+        clearInterval(stopwatchInterval);
+        stopwatchRunning = false;
+        btn.textContent = '▶';
+      } else {
+        stopwatchRunning = true;
+        btn.textContent = '⏸';
+        stopwatchInterval = setInterval(() => {
+          stopwatchSeconds++;
+          document.getElementById('stopwatchDisplay').textContent = formatStopwatchDigits(stopwatchSeconds);
+        }, 1000);
+      }
+    }
+
+    function resetStopwatch() {
+      if (stopwatchRunning) toggleStopwatch();
+      stopwatchSeconds = 0;
+      document.getElementById('stopwatchDisplay').textContent = '00:00:00';
+    }
+
+    // Toast Notification System
+    function showToast(msg, type = 'info') {
+      const container = document.getElementById('toastContainer');
+      if (!container) return;
+
+      const toast = document.createElement('div');
+      toast.className = `p-3 rounded border text-xs font-mono font-medium shadow-2xl flex items-center gap-2 pointer-events-auto transition-all duration-300 transform translate-y-2 opacity-0 ${
+        type === 'success' ? 'bg-emerald-950 border-emerald-500/50 text-emerald-200' :
+        type === 'error' ? 'bg-rose-950 border-rose-500/50 text-rose-200' :
+        'bg-oled-panel border-oled-border text-white'
+      }`;
+
+      toast.innerHTML = `<span>${type === 'success' ? '✓' : type === 'error' ? '✕' : 'ℹ'}</span><span>${msg}</span>`;
+      container.appendChild(toast);
+
+      requestAnimationFrame(() => {
+        toast.classList.remove('translate-y-2', 'opacity-0');
+      });
+
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => toast.remove(), 300);
+      }, 3500);
+    }
+
+    // Backup & Restore
+    function exportDataJson() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `studyflow_backup_${getTodayString()}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    }
+
+    function importDataJson(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        try {
+          const parsed = JSON.parse(evt.target.result);
+          if (parsed && parsed.tasks) {
+            state = parsed;
+            saveState();
+            renderAll();
+            showToast('StudyFlow data restored from JSON backup.', 'success');
+          } else {
+            showToast('Invalid backup file format.', 'error');
+          }
+        } catch (err) {
+          showToast('Failed to parse JSON file.', 'error');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function resetData() {
+      if (!confirm('Reset all engine parameters to defaults?')) return;
+      state = JSON.parse(JSON.stringify(defaultEngineState));
+      saveState();
+      renderAll();
+      showToast('Reset to default syllabus cockpit.', 'info');
+    }
+
+    function renderAll() {
+      renderTopBar();
+      renderRollingMatrix();
+      renderTodayQueue();
+      renderDiagnosticWidget();
+      renderTriagePanel();
+    }
+
+    // Initialize on Load
+    window.addEventListener('DOMContentLoaded', () => {
+      renderAll();
+    });
+  </script>
+</body>
+</html>
