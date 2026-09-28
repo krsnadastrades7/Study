@@ -1,24 +1,24 @@
 {
-  "name": "STUDY // Liquid Glass Cockpit",
-  "short_name": "STUDY",
-  "start_url": "./",
+  "name": "Study Flow Cockpit",
+  "short_name": "Study Flow",
+  "description": "Minimal Focus & High-Yield Workload Matrix",
+  "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
-  "display_override": ["standalone", "window-controls-overlay"],
-  "background_color": "#000000",
-  "theme_color": "#000000",
-  "orientation": "portrait-primary",
+  "orientation": "portrait",
+  "background_color": "#0a0f1d",
+  "theme_color": "#0a0f1d",
   "icons": [
     {
-      "src": "icon-192.svg",
+      "src": "./icon-192.png",
       "sizes": "192x192",
-      "type": "image/svg+xml",
+      "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "icon-512.svg",
+      "src": "./icon-512.png",
       "sizes": "512x512",
-      "type": "image/svg+xml",
+      "type": "image/png",
       "purpose": "any maskable"
     }
   ]
