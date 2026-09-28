@@ -357,6 +357,10 @@
           <div class="flex items-center gap-2 text-xs">
             <span class="text-zinc-400">Week Total:</span>
             <span id="weeklyScheduledTotal" class="tabular-nums text-xs font-bold text-cyan-400 bg-cyan-950/40 px-2 py-0.5 rounded border border-cyan-800/50">--h --m</span>
+            <button onclick="triggerDynamicAutoQueue()" title="Auto-queue In-Progress chapters first, unstarted next, and Sunday revisions" 
+                    class="spring-press px-2.5 py-1 rounded-xl bg-cyan-500/20 border border-cyan-400/40 text-cyan-300 font-bold hover:bg-cyan-500/30 flex items-center gap-1 text-[11px]">
+              <span>⚡</span><span>Auto-Queue D0-D6</span>
+            </button>
             <button onclick="runDynamicWaterfall()" title="Redistribute uncompleted tasks within 8h30m cap" 
                     class="spring-press px-2.5 py-1 rounded-xl bg-indigo-500/20 border border-indigo-400/40 text-indigo-300 font-bold hover:bg-indigo-500/30 flex items-center gap-1 text-[11px]">
               <span>🌊</span><span>Waterfall</span>
@@ -661,6 +665,10 @@
                       class="spring-press px-2.5 py-1.5 rounded-xl bg-purple-500/20 border border-purple-400/50 text-purple-300 text-xs font-bold hover:bg-purple-500/30 flex items-center gap-1">
                 <span>⚡</span><span>Auto-Triage All 79</span>
               </button>
+              <button onclick="openBaselineCalibrationDirectly()" title="Calibrate starting baseline progress" 
+                       class="spring-press px-2.5 py-1.5 rounded-xl bg-emerald-500/20 border border-emerald-400/50 text-emerald-300 text-xs font-bold hover:bg-emerald-500/30 flex items-center gap-1">
+                 <span>📊</span><span>Calibrate Baseline</span>
+               </button>
               <button onclick="openAddSyllabusModal()" class="spring-press px-2.5 py-1.5 rounded-xl bg-cyan-500/20 border border-cyan-400/50 text-cyan-300 text-xs font-bold hover:bg-cyan-500/30">
                 + Custom Chapter
               </button>
@@ -840,6 +848,10 @@
        FULL CONVERSATIONAL MULTI-STEP ONBOARDING MODAL (#onboardingModal)
        (PW / Apple Aesthetic: Category Cards, PW Goal Selector, Modular Syllabus)
        ======================================================================= -->
+    <!-- =======================================================================
+       CONVERSATIONAL MULTI-STEP ONBOARDING WIZARD & CALIBRATION ENGINE
+       (PW / Apple Aesthetic: Category Cards, PW Goal Selector, Baseline Calibration)
+       ======================================================================= -->
   <div id="onboardingModal" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 modal-backdrop hidden">
     <div class="liquid-panel-elevated rounded-3xl max-w-xl w-full p-5 sm:p-7 relative border border-cyan-400/40 shadow-[0_0_80px_rgba(6,182,212,0.3)] max-h-[92vh] flex flex-col overflow-hidden">
       
@@ -851,9 +863,22 @@
         <div id="onboardingStepIndicator" class="flex items-center gap-2 mx-auto">
           <span id="stepDot1" class="w-7 h-1.5 rounded-full bg-cyan-400 transition-all"></span>
           <span id="stepDot2" class="w-2.5 h-1.5 rounded-full bg-white/20 transition-all"></span>
+          <span id="stepDot3" class="w-2.5 h-1.5 rounded-full bg-white/20 transition-all"></span>
         </div>
         <button id="onboardingCloseBtn" onclick="closeOnboardingModal()" class="spring-press text-zinc-400 hover:text-white text-lg font-bold hidden px-1" title="Close">
           ✕
+        </button>
+      </div>
+
+      <!-- Quick Mode Switcher Tabs (Shown when opened via top goal pill) -->
+      <div id="onboardingModeTabs" class="hidden grid grid-cols-2 gap-2 mb-2 shrink-0">
+        <button type="button" id="modalTabGoalDates" onclick="switchOnboardingModeTab('dates')" 
+                class="spring-press py-2 px-3 rounded-xl border border-cyan-400/50 bg-cyan-500/20 text-cyan-200 text-xs font-bold text-center shadow-[0_0_12px_rgba(6,182,212,0.2)]">
+          🎯 1. Target Dates &amp; Goal
+        </button>
+        <button type="button" id="modalTabBaseline" onclick="switchOnboardingModeTab('baseline')" 
+                class="spring-press py-2 px-3 rounded-xl border border-white/10 bg-white/5 text-zinc-400 text-xs font-bold text-center hover:text-white">
+          📊 2. Calibrate Baseline
         </button>
       </div>
 
@@ -909,7 +934,7 @@
                   College &amp; University Degree
                 </h3>
                 <p class="text-xs text-zinc-400 mt-1.5 leading-relaxed">
-                  MBBS, B.Tech / BE, CA, Law, BCA, MCA, B.Sc &amp; Semester Course Modules.
+                  MBBS (First Prof CBME), B.Tech Common First Year, BCA, CA, B.Sc &amp; Semester Course Modules.
                 </p>
               </div>
               <div class="mt-5 flex items-center justify-between text-xs font-bold text-purple-400">
@@ -935,6 +960,27 @@
             <!-- PW Goal Card List -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2" id="competitiveGoalsGrid">
               <!-- Rendered dynamically -->
+            </div>
+          </div>
+
+          <!-- Board Subjects & Elective Adder Container (For 12th/11th Board) -->
+          <div id="boardElectiveContainer" class="p-3.5 rounded-2xl liquid-panel-subtle border border-cyan-400/30 space-y-2 hidden">
+            <div class="flex items-center justify-between">
+              <label class="block text-xs font-black text-white flex items-center gap-1.5">
+                <span>📚</span>
+                <span>Active Subjects &amp; Board Electives</span>
+              </label>
+              <span class="text-[9px] font-mono text-cyan-300 font-bold">ENGLISH CORE PRELOADED</span>
+            </div>
+            <div id="boardSubjectsChipList" class="flex flex-wrap items-center gap-1.5">
+              <!-- Rendered dynamically: PCB/PCM + English Core + elective chips -->
+            </div>
+            <div class="flex items-center gap-2 pt-1 flex-wrap">
+              <button type="button" onclick="openAddElectiveModal()" 
+                      class="spring-press px-2.5 py-1 rounded-xl border border-cyan-400/40 bg-cyan-500/15 text-cyan-200 text-xs font-bold hover:bg-cyan-500/25 flex items-center gap-1.5 shadow-[0_0_10px_rgba(6,182,212,0.15)]">
+                <span>➕</span> <span>Add Elective Subject</span>
+              </button>
+              <span class="text-[10px] text-zinc-400 font-medium">(Physical Ed, Computer Science, Hindi, Psychology)</span>
             </div>
           </div>
 
@@ -981,10 +1027,10 @@
                    class="w-full bg-white/10 border border-white/20 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-zinc-500 outline-none focus:border-cyan-400 font-semibold">
           </div>
 
-          <!-- Submit Button -->
-          <button onclick="submitCompetitiveOnboarding()" 
+          <!-- Next Button: To Step 3 Baseline Calibration -->
+          <button type="button" onclick="proceedToBaselineCalibration('competitive')" 
                   class="spring-press w-full py-3 rounded-2xl bg-gradient-to-r from-cyan-500 to-teal-500 text-black font-black text-sm hover:brightness-110 shadow-[0_4px_16px_rgba(6,182,212,0.35)] flex items-center justify-center gap-2">
-            <span>🚀 Calibrate Cockpit &amp; Launch</span>
+            <span>➡️ Next: Calibrate Starting Baseline</span>
           </button>
         </div>
 
@@ -1006,7 +1052,7 @@
               <div class="p-2.5 rounded-2xl bg-white/[0.03] border border-white/10">
                 <span class="text-[10px] font-black text-rose-300 uppercase tracking-wider block mb-1.5">🩺 Medical &amp; Allied</span>
                 <div class="grid grid-cols-2 sm:grid-cols-3 gap-1.5" id="degGroupMedical">
-                  <!-- MBBS, BDS, BVSc Veterinary, BAMS Ayurvedic, Nursing -->
+                  <!-- MBBS (First Prof CBME), BDS, BVSc Veterinary, BAMS Ayurvedic, Nursing -->
                 </div>
               </div>
 
@@ -1014,7 +1060,7 @@
               <div class="p-2.5 rounded-2xl bg-white/[0.03] border border-white/10">
                 <span class="text-[10px] font-black text-cyan-300 uppercase tracking-wider block mb-1.5">💻 Tech &amp; Engineering</span>
                 <div class="grid grid-cols-3 gap-1.5" id="degGroupTech">
-                  <!-- B.Tech / BE, BCA, MCA -->
+                  <!-- B.Tech (First Year Common), BCA, MCA -->
                 </div>
               </div>
 
@@ -1048,16 +1094,19 @@
           </div>
 
           <!-- Active Subjects / Courses Input with dynamic unit generator -->
-          <div class="p-3.5 rounded-2xl liquid-panel-subtle border border-purple-400/30">
+          <div>
             <div class="flex items-center justify-between mb-1">
-              <label class="block text-xs font-black text-white">Active Subjects / Courses</label>
-              <span class="text-[10px] text-purple-300 font-mono font-semibold">MODULAR SYLLABUS</span>
+              <label class="block text-xs font-bold text-zinc-300 uppercase tracking-wider">
+                Active Courses / Syllabus Modules
+              </label>
+              <span class="text-[10px] text-zinc-500 font-mono">Auto-loads native modules</span>
             </div>
-            <p class="text-[11px] text-zinc-400 mb-2">Comma-separate your active subjects. We'll generate a modular unit builder for each course.</p>
             <input type="text" id="onboardingCollegeCoursesInput" oninput="onCollegeCoursesInputChanged(this.value)" 
-                   class="w-full bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-xs text-white placeholder-zinc-500 outline-none focus:border-purple-400 font-semibold mb-2">
+                   placeholder="e.g. Human Anatomy, Human Physiology, Medical Biochemistry" 
+                   class="w-full bg-white/10 border border-white/20 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-zinc-500 outline-none focus:border-purple-400 font-semibold mb-2">
             
-            <div class="flex items-center gap-1.5 flex-wrap" id="onboardingParsedCoursesChips">
+            <!-- Live Parsed Course Chips -->
+            <div class="flex flex-wrap items-center gap-1.5 min-h-[28px]" id="parsedCoursesChipsContainer">
               <!-- Rendered dynamically -->
             </div>
           </div>
@@ -1076,30 +1125,126 @@
             </div>
           </div>
 
-          <!-- Submit Button -->
-          <button onclick="submitCollegeOnboarding()" 
+          <!-- Next Button: To Step 3 Baseline Calibration -->
+          <button type="button" onclick="proceedToBaselineCalibration('college')" 
                   class="spring-press w-full py-3 rounded-2xl bg-gradient-to-r from-purple-500 to-indigo-500 text-white font-black text-sm hover:brightness-110 shadow-[0_4px_16px_rgba(168,85,247,0.35)] flex items-center justify-center gap-2">
-            <span>🚀 Build Modular Units &amp; Launch</span>
+            <span>➡️ Next: Calibrate Starting Baseline</span>
           </button>
+        </div>
+
+        <!-- ===================================================================
+             STEP 3: CALIBRATE YOUR CURRENT STARTING BASELINE
+             =================================================================== -->
+        <div id="onboardingStep3" class="space-y-3.5 pt-1 hidden">
+          <!-- Live Baseline Progress Banner -->
+          <div class="p-3.5 rounded-2xl liquid-panel-elevated border border-cyan-400/40 bg-gradient-to-r from-cyan-950/40 to-emerald-950/30 space-y-2">
+            <div class="flex items-center justify-between gap-2">
+              <div class="text-xs sm:text-sm font-black text-white flex items-center gap-1.5">
+                <span>📊</span>
+                <span id="baselineLiveBannerText">Baseline: 0% done | 79 chapters left</span>
+              </div>
+              <span id="baselineLiveVelocityText" class="text-[10px] font-mono text-cyan-300 font-bold tabular-nums">Velocity: -- / day</span>
+            </div>
+            <div class="w-full bg-white/10 h-2 rounded-full overflow-hidden">
+              <div id="baselineLiveProgressBar" class="h-full bg-gradient-to-r from-cyan-400 to-emerald-400 transition-all duration-300" style="width: 0%;"></div>
+            </div>
+            <div class="flex items-center justify-between text-[10px] text-zinc-400 font-mono">
+              <span id="baselineLiveStatsCompleted" class="text-emerald-400 font-bold">🟢 0 Mastered</span>
+              <span id="baselineLiveStatsInProgress" class="text-amber-400 font-bold">🟡 0 In-Progress</span>
+              <span id="baselineLiveStatsUnstarted" class="text-zinc-400">⚪ 79 Not Started</span>
+            </div>
+          </div>
+
+          <!-- Quick Bulk Helper Buttons -->
+          <div class="grid grid-cols-2 gap-2">
+            <button type="button" onclick="bulkMarkClass11Completed()" 
+                    class="spring-press py-2 px-2.5 rounded-xl border border-emerald-500/40 bg-emerald-500/15 text-emerald-300 text-xs font-bold hover:bg-emerald-500/25 flex items-center justify-center gap-1.5 shadow-[0_0_12px_rgba(16,185,129,0.15)]">
+              <span>✅ Mark Class 11 as Completed</span>
+            </button>
+            <button type="button" onclick="bulkResetAllUnstarted()" 
+                    class="spring-press py-2 px-2.5 rounded-xl border border-white/15 bg-white/5 text-zinc-300 text-xs font-bold hover:bg-white/10 flex items-center justify-center gap-1.5">
+              <span>⚪ Fresh Start (All 0%)</span>
+            </button>
+          </div>
+
+          <!-- Categorized Subject Tabs -->
+          <div id="baselineSubjectTabsContainer" class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+            <!-- Dynamically rendered: [All (79)] [Physics (25)] [Chemistry (22)] ... -->
+          </div>
+
+          <!-- Search Input -->
+          <div class="relative">
+            <input type="text" id="baselineChapterSearch" oninput="onBaselineSearchChange(this.value)" 
+                   placeholder="Search chapters or topics in baseline..." 
+                   class="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white placeholder-zinc-500 outline-none focus:border-cyan-400 font-medium">
+          </div>
+
+          <!-- Interactive Chapter Checklist (with 3-State Cycling Pills) -->
+          <div id="baselineChapterListContainer" class="space-y-1.5 max-h-[340px] overflow-y-auto pr-1">
+            <!-- Dynamic chapter items with 3-state cycling pill buttons -->
+          </div>
+
+          <!-- Bottom Action Buttons -->
+          <div class="flex items-center gap-2 pt-2 border-t border-white/10">
+            <button type="button" onclick="goBackOnboardingStep()" 
+                    class="spring-press py-3 px-4 rounded-2xl bg-white/10 text-zinc-300 hover:text-white font-bold text-xs">
+              ‹ Back
+            </button>
+            <button type="button" onclick="confirmBaselineAndLaunch()" 
+                    class="spring-press flex-1 py-3 rounded-2xl bg-gradient-to-r from-cyan-500 to-teal-500 text-black font-black text-sm hover:brightness-110 shadow-[0_4px_16px_rgba(6,182,212,0.35)] flex items-center justify-center gap-2">
+              <span>🚀 Confirm Baseline &amp; Launch Cockpit</span>
+            </button>
+          </div>
         </div>
 
       </div>
     </div>
   </div>
 
-        <div class="p-3 rounded-xl bg-white/5 border border-white/10 text-[11px] text-zinc-400 leading-relaxed">
-          <strong>Start Fresh:</strong> Clean slate with unlocked custom target, 0/79 mastered chapters, and empty task list.<br>
-          <strong>Load Demo:</strong> Pre-populates sample tasks, demo syllabus progress, and test data.
+  <!-- =======================================================================
+       MODAL: ADD ELECTIVE SUBJECT (For 12th/11th Board CBSE & Competitive)
+       ======================================================================= -->
+  <div id="addElectiveModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop hidden">
+    <div class="liquid-panel-elevated rounded-3xl max-w-sm w-full p-5 relative border border-cyan-400/40 shadow-[0_0_50px_rgba(6,182,212,0.3)]">
+      <button onclick="closeAddElectiveModal()" class="absolute top-4 right-4 text-zinc-400 hover:text-white text-base">✕</button>
+      <div class="flex items-center gap-2.5 mb-3">
+        <div class="w-10 h-10 rounded-2xl bg-cyan-500/20 border border-cyan-400/50 flex items-center justify-center text-xl text-cyan-300">
+          ➕
+        </div>
+        <div>
+          <h3 class="text-sm font-black text-white">Add Elective Subject</h3>
+          <p class="text-[11px] text-zinc-400">Board exam 5th/6th optional subject</p>
         </div>
       </div>
+      
+      <div class="space-y-2 mb-3">
+        <button type="button" onclick="selectPredefinedElective('Physical Education')" class="spring-press w-full p-2.5 rounded-xl border border-white/10 bg-white/5 hover:border-cyan-400/40 text-left flex items-center justify-between">
+          <span class="text-xs font-bold text-white">🏃 Physical Education</span>
+          <span class="text-[10px] text-zinc-400 font-mono">10 Chapters</span>
+        </button>
+        <button type="button" onclick="selectPredefinedElective('Computer Science')" class="spring-press w-full p-2.5 rounded-xl border border-white/10 bg-white/5 hover:border-cyan-400/40 text-left flex items-center justify-between">
+          <span class="text-xs font-bold text-white">💻 Computer Science</span>
+          <span class="text-[10px] text-zinc-400 font-mono">5 Modules</span>
+        </button>
+        <button type="button" onclick="selectPredefinedElective('Hindi')" class="spring-press w-full p-2.5 rounded-xl border border-white/10 bg-white/5 hover:border-cyan-400/40 text-left flex items-center justify-between">
+          <span class="text-xs font-bold text-white">📖 Hindi Core</span>
+          <span class="text-[10px] text-zinc-400 font-mono">4 Modules</span>
+        </button>
+        <button type="button" onclick="selectPredefinedElective('Psychology')" class="spring-press w-full p-2.5 rounded-xl border border-white/10 bg-white/5 hover:border-cyan-400/40 text-left flex items-center justify-between">
+          <span class="text-xs font-bold text-white">🧠 Psychology</span>
+          <span class="text-[10px] text-zinc-400 font-mono">7 Chapters</span>
+        </button>
+      </div>
 
-      <div class="grid grid-cols-2 gap-3">
-        <button onclick="confirmSetupStartFresh()" class="spring-press py-3 rounded-2xl bg-gradient-to-r from-cyan-500 to-teal-500 text-black font-black text-xs hover:brightness-110 shadow-[0_4px_16px_rgba(6,182,212,0.35)]">
-          ✨ Start Fresh
-        </button>
-        <button onclick="confirmSetupLoadDemo()" class="spring-press py-3 rounded-2xl liquid-panel text-zinc-200 font-bold text-xs hover:text-white border-white/20">
-          🚀 Load Demo
-        </button>
+      <div>
+        <label class="block text-[11px] font-bold text-zinc-300 mb-1">Or Custom Elective Name:</label>
+        <div class="flex items-center gap-2">
+          <input type="text" id="customElectiveInput" placeholder="e.g. Informatics Practices" 
+                 class="flex-1 bg-white/10 border border-white/20 rounded-xl px-3 py-1.5 text-xs text-white placeholder-zinc-500 outline-none focus:border-cyan-400 font-medium">
+          <button type="button" onclick="addCustomElective()" class="spring-press px-3 py-1.5 rounded-xl bg-cyan-500 text-black text-xs font-black hover:bg-cyan-400">
+            Add
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -1652,88 +1797,374 @@
     const DAILY_CAP_MINUTES = 510; // 8 hours 30 minutes
 
     /* =========================================================================
-       1. ACADEMIC DATASETS & OFFICIAL SYLLABI
+       1. ACADEMIC DATASETS & OFFICIAL PRELOADED SYLLABI
        ========================================================================= */
-    const NEET_SYLLABUS = {
+    // Comprehensive NEET Syllabus (Official NMC/NTA 79 Chapters: 42 Class 11, 37 Class 12)
+    const NEET_SYLLABUS_DETAILED = {
       Physics: [
-        "Units & Measurements", "Motion in a Straight Line", "Motion in a Plane", 
-        "Laws of Motion", "Work, Energy & Power", "System of Particles & Rotational Motion", 
-        "Gravitation", "Mechanical Properties of Solids", "Mechanical Properties of Fluids", 
-        "Thermal Properties of Matter", "Thermodynamics", "Kinetic Theory", 
-        "Oscillations & Waves", "Electrostatics & Capacitance", "Current Electricity", 
-        "Moving Charges & Magnetism", "Magnetism & Matter", "Electromagnetic Induction", 
-        "Alternating Current", "Electromagnetic Waves", "Ray Optics & Optical Instruments", 
-        "Wave Optics", "Dual Nature of Radiation & Matter", "Atoms & Nuclei", 
-        "Semiconductor Electronics"
+        { name: "Units & Measurements", classLevel: 11, tier: "B" },
+        { name: "Motion in a Straight Line", classLevel: 11, tier: "B" },
+        { name: "Motion in a Plane", classLevel: 11, tier: "B" },
+        { name: "Laws of Motion", classLevel: 11, tier: "B" },
+        { name: "Work, Energy & Power", classLevel: 11, tier: "B" },
+        { name: "System of Particles & Rotational Motion", classLevel: 11, tier: "A" },
+        { name: "Gravitation", classLevel: 11, tier: "B" },
+        { name: "Mechanical Properties of Solids", classLevel: 11, tier: "C" },
+        { name: "Mechanical Properties of Fluids", classLevel: 11, tier: "B" },
+        { name: "Thermal Properties of Matter", classLevel: 11, tier: "C" },
+        { name: "Thermodynamics", classLevel: 11, tier: "A" },
+        { name: "Kinetic Theory", classLevel: 11, tier: "B" },
+        { name: "Oscillations & Waves", classLevel: 11, tier: "B" },
+        { name: "Electrostatics & Capacitance", classLevel: 12, tier: "A" },
+        { name: "Current Electricity", classLevel: 12, tier: "A" },
+        { name: "Moving Charges & Magnetism", classLevel: 12, tier: "B" },
+        { name: "Magnetism & Matter", classLevel: 12, tier: "C" },
+        { name: "Electromagnetic Induction", classLevel: 12, tier: "B" },
+        { name: "Alternating Current", classLevel: 12, tier: "B" },
+        { name: "Electromagnetic Waves", classLevel: 12, tier: "C" },
+        { name: "Ray Optics & Optical Instruments", classLevel: 12, tier: "A" },
+        { name: "Wave Optics", classLevel: 12, tier: "B" },
+        { name: "Dual Nature of Radiation & Matter", classLevel: 12, tier: "B" },
+        { name: "Atoms & Nuclei", classLevel: 12, tier: "B" },
+        { name: "Semiconductor Electronics", classLevel: 12, tier: "A" }
       ],
       Chemistry: [
-        "Some Basic Concepts of Chemistry (Mole)", "Structure of Atom", 
-        "Classification of Elements & Periodicity", "Chemical Bonding & Molecular Structure", 
-        "Thermodynamics", "Equilibrium", "Redox Reactions", 
-        "Solutions", "Electrochemistry", "Chemical Kinetics", 
-        "p-Block Elements", "d- and f-Block Elements", "Coordination Compounds", 
-        "Purification & Characterisation of Organic Compounds", 
-        "Some Basic Principles of Organic Chemistry (GOC & Isomerism)", 
-        "Hydrocarbons", "Haloalkanes & Haloarenes", "Alcohols, Phenols & Ethers", 
-        "Aldehydes, Ketones & Carboxylic Acids", "Organic Compounds Containing Nitrogen (Amines)", 
-        "Biomolecules", "Principles Related to Practical Chemistry"
+        { name: "Some Basic Concepts of Chemistry (Mole)", classLevel: 11, tier: "B" },
+        { name: "Structure of Atom", classLevel: 11, tier: "B" },
+        { name: "Classification of Elements & Periodicity", classLevel: 11, tier: "C" },
+        { name: "Chemical Bonding & Molecular Structure", classLevel: 11, tier: "A" },
+        { name: "Thermodynamics", classLevel: 11, tier: "A" },
+        { name: "Equilibrium", classLevel: 11, tier: "A" },
+        { name: "Redox Reactions", classLevel: 11, tier: "C" },
+        { name: "Purification & Characterisation of Organic Compounds", classLevel: 11, tier: "B" },
+        { name: "Some Basic Principles of Organic Chemistry (GOC & Isomerism)", classLevel: 11, tier: "A" },
+        { name: "Hydrocarbons", classLevel: 11, tier: "B" },
+        { name: "Solutions", classLevel: 12, tier: "B" },
+        { name: "Electrochemistry", classLevel: 12, tier: "B" },
+        { name: "Chemical Kinetics", classLevel: 12, tier: "B" },
+        { name: "p-Block Elements", classLevel: 12, tier: "B" },
+        { name: "d- and f-Block Elements", classLevel: 12, tier: "B" },
+        { name: "Coordination Compounds", classLevel: 12, tier: "A" },
+        { name: "Haloalkanes & Haloarenes", classLevel: 12, tier: "B" },
+        { name: "Alcohols, Phenols & Ethers", classLevel: 12, tier: "B" },
+        { name: "Aldehydes, Ketones & Carboxylic Acids", classLevel: 12, tier: "A" },
+        { name: "Organic Compounds Containing Nitrogen (Amines)", classLevel: 12, tier: "B" },
+        { name: "Biomolecules", classLevel: 12, tier: "B" },
+        { name: "Principles Related to Practical Chemistry", classLevel: 12, tier: "C" }
       ],
       Botany: [
-        "Cell: The Unit of Life", "Cell Cycle & Cell Division", 
-        "The Living World", "Biological Classification", "Plant Kingdom", 
-        "Morphology of Flowering Plants", "Anatomy of Flowering Plants", 
-        "Photosynthesis in Higher Plants", "Respiration in Plants", "Plant Growth & Development", 
-        "Sexual Reproduction in Flowering Plants", "Principles of Inheritance & Variation (Genetics I)", 
-        "Molecular Basis of Inheritance (Genetics II)", "Microbes in Human Welfare", 
-        "Organisms & Populations", "Ecosystem", "Biodiversity & Conservation"
+        { name: "Cell: The Unit of Life", classLevel: 11, tier: "A" },
+        { name: "Cell Cycle & Cell Division", classLevel: 11, tier: "A" },
+        { name: "The Living World", classLevel: 11, tier: "C" },
+        { name: "Biological Classification", classLevel: 11, tier: "B" },
+        { name: "Plant Kingdom", classLevel: 11, tier: "B" },
+        { name: "Morphology of Flowering Plants", classLevel: 11, tier: "B" },
+        { name: "Anatomy of Flowering Plants", classLevel: 11, tier: "B" },
+        { name: "Photosynthesis in Higher Plants", classLevel: 11, tier: "A" },
+        { name: "Respiration in Plants", classLevel: 11, tier: "B" },
+        { name: "Plant Growth & Development", classLevel: 11, tier: "B" },
+        { name: "Sexual Reproduction in Flowering Plants", classLevel: 12, tier: "A" },
+        { name: "Principles of Inheritance & Variation (Genetics I)", classLevel: 12, tier: "A" },
+        { name: "Molecular Basis of Inheritance (Genetics II)", classLevel: 12, tier: "A" },
+        { name: "Microbes in Human Welfare", classLevel: 12, tier: "B" },
+        { name: "Organisms & Populations", classLevel: 12, tier: "B" },
+        { name: "Ecosystem", classLevel: 12, tier: "B" },
+        { name: "Biodiversity & Conservation", classLevel: 12, tier: "B" }
       ],
       Zoology: [
-        "Animal Kingdom", "Structural Organisation in Animals", "Biomolecules (Bio)", 
-        "Breathing & Exchange of Gases", "Body Fluids & Circulation", 
-        "Excretory Products & their Elimination", "Locomotion & Movement", 
-        "Neural Control & Coordination", "Chemical Coordination & Integration", 
-        "Human Reproduction", "Reproductive Health", "Evolution", 
-        "Human Health & Disease", "Biotechnology: Principles & Processes", 
-        "Biotechnology & its Applications"
+        { name: "Animal Kingdom", classLevel: 11, tier: "B" },
+        { name: "Structural Organisation in Animals", classLevel: 11, tier: "B" },
+        { name: "Biomolecules (Bio)", classLevel: 11, tier: "A" },
+        { name: "Breathing & Exchange of Gases", classLevel: 11, tier: "B" },
+        { name: "Body Fluids & Circulation", classLevel: 11, tier: "A" },
+        { name: "Excretory Products & their Elimination", classLevel: 11, tier: "B" },
+        { name: "Locomotion & Movement", classLevel: 11, tier: "B" },
+        { name: "Neural Control & Coordination", classLevel: 11, tier: "B" },
+        { name: "Chemical Coordination & Integration", classLevel: 11, tier: "A" },
+        { name: "Human Reproduction", classLevel: 12, tier: "A" },
+        { name: "Reproductive Health", classLevel: 12, tier: "B" },
+        { name: "Evolution", classLevel: 12, tier: "B" },
+        { name: "Human Health & Disease", classLevel: 12, tier: "B" },
+        { name: "Biotechnology: Principles & Processes", classLevel: 12, tier: "A" },
+        { name: "Biotechnology & its Applications", classLevel: 12, tier: "A" }
+      ]
+    };
+
+    // Backward-compatible simple map of chapter names for NEET
+    const NEET_SYLLABUS = {
+      Physics: NEET_SYLLABUS_DETAILED.Physics.map(c => c.name),
+      Chemistry: NEET_SYLLABUS_DETAILED.Chemistry.map(c => c.name),
+      Botany: NEET_SYLLABUS_DETAILED.Botany.map(c => c.name),
+      Zoology: NEET_SYLLABUS_DETAILED.Zoology.map(c => c.name)
+    };
+
+    // Comprehensive JEE Syllabus (Full Class 11+12: 67 Chapters: 34 Class 11, 33 Class 12)
+    const JEE_SYLLABUS_DETAILED = {
+      Physics: [
+        { name: "Units and Measurements", classLevel: 11, tier: "B" },
+        { name: "Kinematics (Motion in 1D & 2D, Vectors)", classLevel: 11, tier: "A" },
+        { name: "Laws of Motion & Friction", classLevel: 11, tier: "B" },
+        { name: "Work, Power and Energy", classLevel: 11, tier: "B" },
+        { name: "Rotational Motion & System of Particles", classLevel: 11, tier: "A" },
+        { name: "Gravitation & Planetary Dynamics", classLevel: 11, tier: "B" },
+        { name: "Mechanical Properties of Solids & Fluids", classLevel: 11, tier: "B" },
+        { name: "Thermal Properties of Matter & Heat Transfer", classLevel: 11, tier: "C" },
+        { name: "Thermodynamics", classLevel: 11, tier: "A" },
+        { name: "Kinetic Theory of Gases", classLevel: 11, tier: "B" },
+        { name: "Oscillations (Simple Harmonic Motion)", classLevel: 11, tier: "B" },
+        { name: "Waves & Sound", classLevel: 11, tier: "B" },
+        { name: "Electrostatics & Gauss's Law", classLevel: 12, tier: "A" },
+        { name: "Capacitance & Dielectrics", classLevel: 12, tier: "A" },
+        { name: "Current Electricity & Circuits", classLevel: 12, tier: "A" },
+        { name: "Moving Charges & Magnetic Effects", classLevel: 12, tier: "A" },
+        { name: "Magnetism and Matter", classLevel: 12, tier: "C" },
+        { name: "Electromagnetic Induction", classLevel: 12, tier: "A" },
+        { name: "Alternating Currents", classLevel: 12, tier: "B" },
+        { name: "Electromagnetic Waves", classLevel: 12, tier: "C" },
+        { name: "Ray Optics & Optical Instruments", classLevel: 12, tier: "A" },
+        { name: "Wave Optics & Interference", classLevel: 12, tier: "B" },
+        { name: "Dual Nature of Matter and Radiation", classLevel: 12, tier: "B" },
+        { name: "Atoms and Nuclei", classLevel: 12, tier: "B" },
+        { name: "Semiconductor Electronics & Logic Gates", classLevel: 12, tier: "A" }
+      ],
+      Chemistry: [
+        { name: "Some Basic Concepts in Chemistry (Mole Concept)", classLevel: 11, tier: "B" },
+        { name: "Atomic Structure & Quantum Numbers", classLevel: 11, tier: "B" },
+        { name: "Chemical Bonding & Molecular Structure", classLevel: 11, tier: "A" },
+        { name: "Chemical Thermodynamics & Thermochemistry", classLevel: 11, tier: "A" },
+        { name: "Chemical & Ionic Equilibrium", classLevel: 11, tier: "A" },
+        { name: "Redox Reactions & Oxidation States", classLevel: 11, tier: "C" },
+        { name: "Periodic Table & Periodic Properties", classLevel: 11, tier: "C" },
+        { name: "p-Block Elements (Group 13 & 14)", classLevel: 11, tier: "B" },
+        { name: "General Organic Chemistry (GOC, IUPAC & Isomerism)", classLevel: 11, tier: "A" },
+        { name: "Hydrocarbons (Alkanes, Alkenes, Alkynes & Arenes)", classLevel: 11, tier: "B" },
+        { name: "Solutions & Colligative Properties", classLevel: 12, tier: "B" },
+        { name: "Electrochemistry & Nernst Equation", classLevel: 12, tier: "A" },
+        { name: "Chemical Kinetics & Rate Laws", classLevel: 12, tier: "B" },
+        { name: "d- and f-Block Elements", classLevel: 12, tier: "B" },
+        { name: "Coordination Compounds & Ligand Field Theory", classLevel: 12, tier: "A" },
+        { name: "Haloalkanes and Haloarenes", classLevel: 12, tier: "B" },
+        { name: "Alcohols, Phenols and Ethers", classLevel: 12, tier: "B" },
+        { name: "Aldehydes, Ketones and Carboxylic Acids", classLevel: 12, tier: "A" },
+        { name: "Organic Compounds Containing Nitrogen (Amines & Diazonium)", classLevel: 12, tier: "B" },
+        { name: "Biomolecules", classLevel: 12, tier: "B" },
+        { name: "Principles Related to Practical Chemistry", classLevel: 12, tier: "C" }
+      ],
+      Mathematics: [
+        { name: "Sets, Relations and Functions (Class 11)", classLevel: 11, tier: "B" },
+        { name: "Trigonometric Functions & Identities", classLevel: 11, tier: "B" },
+        { name: "Complex Numbers & Quadratic Equations", classLevel: 11, tier: "A" },
+        { name: "Linear Inequalities & Modulus Functions", classLevel: 11, tier: "C" },
+        { name: "Permutations and Combinations", classLevel: 11, tier: "A" },
+        { name: "Binomial Theorem", classLevel: 11, tier: "B" },
+        { name: "Sequences and Series (AP, GP & Special Series)", classLevel: 11, tier: "B" },
+        { name: "Straight Lines & Pair of Straight Lines", classLevel: 11, tier: "B" },
+        { name: "Conic Sections (Circle, Parabola, Ellipse, Hyperbola)", classLevel: 11, tier: "A" },
+        { name: "Limits and Derivatives (Foundations)", classLevel: 11, tier: "B" },
+        { name: "Statistics & Basic Probability", classLevel: 11, tier: "C" },
+        { name: "Relations, Functions & Inverse Trigonometry", classLevel: 12, tier: "B" },
+        { name: "Matrices and Determinants", classLevel: 12, tier: "A" },
+        { name: "Continuity, Differentiability & Differentiation", classLevel: 12, tier: "A" },
+        { name: "Applications of Derivatives (Tangents, Maxima-Minima)", classLevel: 12, tier: "A" },
+        { name: "Indefinite & Definite Integrals", classLevel: 12, tier: "A" },
+        { name: "Applications of Integrals (Area Under Curves)", classLevel: 12, tier: "B" },
+        { name: "Differential Equations (Formation & Solution)", classLevel: 12, tier: "A" },
+        { name: "Vector Algebra", classLevel: 12, tier: "A" },
+        { name: "Three-Dimensional Geometry (Lines & Planes)", classLevel: 12, tier: "A" },
+        { name: "Probability (Bayes' Theorem & Distributions)", classLevel: 12, tier: "A" }
       ]
     };
 
     const JEE_SYLLABUS = {
-      Physics: [
-        "Kinematics & Vectors", "Laws of Motion & Friction", "Work, Power & Energy", 
-        "Rotational Motion & System of Particles", "Gravitation & Planetary Dynamics", "Thermodynamics & Kinetic Theory", 
-        "Oscillations & Waves", "Electrostatics & Capacitors", "Current Electricity", 
-        "Magnetism & Electromagnetic Induction", "Ray & Wave Optics", "Modern Physics & Semiconductors"
+      Physics: JEE_SYLLABUS_DETAILED.Physics.map(c => c.name),
+      Chemistry: JEE_SYLLABUS_DETAILED.Chemistry.map(c => c.name),
+      Mathematics: JEE_SYLLABUS_DETAILED.Mathematics.map(c => c.name)
+    };
+
+    // English Core Preloaded Modules (CBSE Class 12 & Class 11)
+    const ENGLISH_CORE_SYLLABUS = {
+      12: [
+        { name: "Reading Comprehension: Unseen Discursive & Case-based Factual Passages", classLevel: 12, tier: "A" },
+        { name: "Creative Writing Skills: Notice, Invitations & Formal/Informal Letters", classLevel: 12, tier: "B" },
+        { name: "Creative Writing Skills: Article Writing & Report Writing", classLevel: 12, tier: "B" },
+        { name: "Flamingo (Prose): The Last Lesson, Lost Spring, Deep Water, The Rattrap, Indigo, Going Places", classLevel: 12, tier: "A" },
+        { name: "Flamingo (Poetry): My Mother at Sixty-Six, Keeping Quiet, A Thing of Beauty, A Roadside Stand, Aunt Jennifer's Tigers", classLevel: 12, tier: "A" },
+        { name: "Vistas (Supplementary): The Third Level, The Tiger King, Journey to the End of the Earth, The Enemy, On the Face of It, Memories of Childhood", classLevel: 12, tier: "A" }
       ],
-      Chemistry: [
-        "Mole Concept & Atomic Structure", "Chemical Bonding & Molecular Structure", "Chemical Thermodynamics", 
-        "Chemical & Ionic Equilibrium", "Electrochemistry & Chemical Kinetics", "Periodic Table & Periodicity", 
-        "Coordination Compounds", "p-Block, d-Block & f-Block Elements", "Purification & General Organic Chemistry (GOC)", 
-        "Hydrocarbons & Halogen Derivatives", "Oxygen & Nitrogen Functional Groups", "Biomolecules & Practical Chemistry"
+      11: [
+        { name: "Reading Comprehension: Discursive & Factual Case Passages, Note Making & Summarization", classLevel: 11, tier: "A" },
+        { name: "Creative Writing Skills: Notice, Posters, Speech & Debate Writing", classLevel: 11, tier: "B" },
+        { name: "Hornbill (Prose): The Portrait of a Lady, We're Not Afraid to Die, Discovering Tut, The Adventure, Silk Road", classLevel: 11, tier: "A" },
+        { name: "Hornbill (Poetry): A Photograph, The Laburnum Top, The Voice of the Rain, Childhood, Father to Son", classLevel: 11, tier: "A" },
+        { name: "Snapshots (Supplementary): Summer of the Beautiful White Horse, The Address, Mother's Day, Birth, The Tale of Melon City", classLevel: 11, tier: "A" }
+      ]
+    };
+
+    // Elective Syllabi Database (Physical Education, Computer Science, Hindi, Psychology)
+    const ELECTIVE_SYLLABI = {
+      "Physical Education": [
+        { name: "Management of Sporting Events (Committees, Fixtures & Tournaments)", tier: "B" },
+        { name: "Children & Women in Sports (Motor Development & Postural Deformities)", tier: "B" },
+        { name: "Yoga as Preventive Measure for Lifestyle Diseases (Asanas & Benefits)", tier: "B" },
+        { name: "Physical Education & Sports for CWSN (Adaptive Sports & Inclusion)", tier: "C" },
+        { name: "Sports & Nutrition (Balanced Diet, Macro/Micro Nutrients & Weight Control)", tier: "A" },
+        { name: "Test & Measurement in Sports (Fitness Tests, SAI Khelo India & Rikli-Jones)", tier: "B" },
+        { name: "Physiology & Injuries in Sports (Cardiorespiratory & First Aid Management)", tier: "A" },
+        { name: "Biomechanics & Sports (Newton's Laws, Levers, Equilibrium & Projectile)", tier: "A" },
+        { name: "Psychology & Sports (Personality, Motivation, Aggression & Anxiety)", tier: "B" },
+        { name: "Training in Sports (Strength, Endurance, Speed, Flexibility & Periodization)", tier: "A" }
       ],
-      Mathematics: [
-        "Sets, Relations & Functions", "Complex Numbers & Quadratic Equations", "Matrices & Determinants", 
-        "Permutations, Combinations & Binomial Theorem", "Sequences & Series", "Differential Calculus & Limits", 
-        "Applications of Derivatives", "Integral Calculus (Definite & Indefinite)", "Differential Equations", 
-        "Coordinate Geometry & Conic Sections", "Vectors & 3-Dimensional Geometry", "Probability & Statistics"
+      "Computer Science": [
+        { name: "Computational Thinking & Python Revision Tour (Functions & Scope)", tier: "A" },
+        { name: "File Handling in Python (Text Files, Binary pickle & CSV Files)", tier: "A" },
+        { name: "Data Structures: Linear Lists, Stacks & Queue Applications in Python", tier: "A" },
+        { name: "Computer Networks: Transmission Media, Topologies, Protocols & Cyber Safety", tier: "B" },
+        { name: "Database Management: Relational Concepts & Structured Query Language (SQL Queries)", tier: "A" }
+      ],
+      "Hindi": [
+        { name: "अपठित बोध (गद्यांश व काव्यांश विश्लेषण एवं प्रश्नोत्तर)", tier: "B" },
+        { name: "रचनात्मक एवं व्यावहारिक लेखन (कार्यालयी पत्र, आलेख, फीचर व जनसंचार माध्यम)", tier: "A" },
+        { name: "आरोह (काव्य खंड एवं गद्य खंड: भाव सौंदर्य व शिल्प सौंदर्य)", tier: "A" },
+        { name: "वितान (पूरक पाठ्यपुस्तक: गहन अध्ययन व निबंधात्मक प्रश्न)", tier: "B" }
+      ],
+      "Psychology": [
+        { name: "Variations in Psychological Attributes (Intelligence, Aptitude & Assessment)", tier: "A" },
+        { name: "Self and Personality (Trait Approaches, Humanistic & Defense Mechanisms)", tier: "A" },
+        { name: "Meeting Life Challenges (Stress Nature, Sources, Coping Strategies & Well-being)", tier: "B" },
+        { name: "Psychological Disorders (Anxiety, Mood, Somatoform & Schizophrenia)", tier: "A" },
+        { name: "Therapeutic Approaches (Psychodynamic, Behavioral, Cognitive & Humanistic)", tier: "A" },
+        { name: "Attitude and Social Cognition (Attitude Formation, Prejudice & Social Perception)", tier: "B" },
+        { name: "Social Influence and Group Processes (Conformity, Compliance & Group Dynamics)", tier: "B" }
+      ]
+    };
+
+    // MBBS First Prof CBME India Syllabus (NMC Curriculum: Anatomy 8 modules, Physiology 9 modules, Biochemistry 5 modules = 22 modules)
+    const MBBS_CBME_SYLLABUS = {
+      "Human Anatomy": [
+        { name: "General Anatomy, Genetics & Embryology Foundations", tier: "A" },
+        { name: "Upper Limb (Pectoral, Axilla, Brachial Plexus, Arm, Forearm & Hand)", tier: "B" },
+        { name: "Lower Limb (Gluteal, Thigh, Popliteal, Leg, Foot & Joints)", tier: "B" },
+        { name: "Thorax (Thoracic Wall, Mediastinum, Heart, Pericardium, Lungs & Pleura)", tier: "A" },
+        { name: "Abdomen & Pelvis (Anterior Wall, Peritoneum, Viscera & Pelvic Organs)", tier: "A" },
+        { name: "Head, Neck & Face (Triangles, Cranial Nerves, Pharynx, Larynx & Eyeball)", tier: "A" },
+        { name: "Neuroanatomy (Meninges, Spinal Cord, Brainstem, Cerebellum & Cerebrum)", tier: "A" },
+        { name: "Histology & Clinical Surface Anatomy Correlations", tier: "B" }
+      ],
+      "Human Physiology": [
+        { name: "General Physiology & Nerve-Muscle Physiology (Action Potentials, Synapses)", tier: "A" },
+        { name: "Blood & Hematology (Erythropoiesis, Hemoglobin, Hemostasis & Blood Groups)", tier: "B" },
+        { name: "Cardiovascular System (CVS: Electrophysiology, Cardiac Cycle, ECG & BP)", tier: "A" },
+        { name: "Respiratory System (Pulmonary Mechanics, Gas Transport & Neural Control)", tier: "A" },
+        { name: "Gastrointestinal System (GIT: Secretions, Motility, Digestion & Liver)", tier: "B" },
+        { name: "Renal System & Body Fluids (Glomerular Filtration, Counter-Current & Acid-Base)", tier: "A" },
+        { name: "Endocrine System (Hypothalamic-Pituitary, Thyroid, Adrenal & Calcium Homeostasis)", tier: "A" },
+        { name: "Reproductive Physiology & Pregnancy/Lactation", tier: "B" },
+        { name: "Central Nervous System (CNS) & Special Senses (Sensory/Motor Pathways, Vision, Hearing)", tier: "A" }
+      ],
+      "Medical Biochemistry": [
+        { name: "Cell Biology, Biomolecules, Enzymes & Clinical Enzymology", tier: "A" },
+        { name: "Intermediary Metabolism: Carbohydrates, Lipids & Amino Acids", tier: "A" },
+        { name: "Biological Oxidation, Electron Transport Chain & Bioenergetics", tier: "A" },
+        { name: "Molecular Biology: DNA Replication, Transcription, Translation & PCR/Recombinant DNA", tier: "A" },
+        { name: "Clinical Biochemistry, Organ Function Tests, Nutrition & Mineral Metabolism", tier: "B" }
+      ]
+    };
+
+    // B.Tech First Year Common Syllabus (AICTE Common: 5 Subjects, 25 Modules)
+    const BTECH_FIRST_YEAR_SYLLABUS = {
+      "Engineering Mathematics": [
+        { name: "Differential Calculus: Rolle's/Mean Value Theorems, Taylor Series & Curvature", tier: "A" },
+        { name: "Linear Algebra: Matrix Operations, Rank, System of Linear Equations & Eigenvalues", tier: "A" },
+        { name: "Multiple Integrals: Double/Triple Integrals, Vector Calculus (Gradient, Divergence, Curl)", tier: "B" },
+        { name: "Ordinary Differential Equations (ODEs): First & Second Order Linear Equations", tier: "A" },
+        { name: "Sequences, Infinite Series Tests & Fourier/Laplace Transformations", tier: "B" }
+      ],
+      "Engineering Physics/Chemistry": [
+        { name: "Wave Optics: Interference in Thin Films, Diffraction Gratings & Polarization", tier: "B" },
+        { name: "Quantum Mechanics: De Broglie Hypothesis, Uncertainty Principle & Schrödinger Wave Equation", tier: "A" },
+        { name: "Laser & Optical Fibers: Stimulated Emission, Semiconductor Lasers & Attenuation", tier: "B" },
+        { name: "Chemical Thermodynamics, Phase Rule & Electrochemistry/Corrosion Science", tier: "A" },
+        { name: "Water Technology (Hardness, Softening), Engineering Polymers & Nanomaterials", tier: "B" }
+      ],
+      "Programming in C/Python": [
+        { name: "Algorithms, Flowcharts, Data Types, Operators & Conditional Branching", tier: "B" },
+        { name: "Iterative Loops, Array Data Structures & String Processing", tier: "A" },
+        { name: "Functions, Recursion, Parameter Passing & Scope Rules", tier: "A" },
+        { name: "Pointers, Dynamic Memory Allocation & Structures / Python Lists & Tuples", tier: "A" },
+        { name: "File Management (Reading/Writing), Preprocessor / Python Dicts & OOP Fundamentals", tier: "B" }
+      ],
+      "Basic Electrical Engineering (BEE)": [
+        { name: "DC Circuit Analysis: Ohm's Law, KCL/KVL, Mesh/Nodal Analysis & Thevenin/Norton Theorems", tier: "A" },
+        { name: "Single-Phase AC Circuits: Sinusoidal Waveforms, Phasors, Impedance & Power Factor", tier: "A" },
+        { name: "Three-Phase Balanced Systems: Star and Delta Connections, Line/Phase Relations & Power", tier: "B" },
+        { name: "Magnetic Circuits: Magnetic Flux, Inductance & Single-Phase Ideal/Practical Transformers", tier: "A" },
+        { name: "Electrical Machines: DC Motor Operation, Induction Motor Working Principles & Domestic Wiring", tier: "B" }
+      ],
+      "Engineering Graphics": [
+        { name: "Engineering Scales, Plain/Diagonal Scales & Engineering Conic Curves", tier: "C" },
+        { name: "Orthographic Projections: Theory of Projection, Projections of Points & Straight Lines", tier: "B" },
+        { name: "Projections of Planes & Solids (Prisms, Pyramids, Cylinders & Cones)", tier: "A" },
+        { name: "Sections of Solids, Development of Surfaces & Isometric Projections", tier: "A" },
+        { name: "Computer-Aided Drafting (CAD): Interface, 2D Commands, Dimensioning & Modeling", tier: "B" }
+      ]
+    };
+
+    // BCA Core Syllabus (Discrete Math, C Programming, Computer Architecture, Data Structures, DBMS = 25 Modules)
+    const BCA_SYLLABUS = {
+      "Discrete Mathematics": [
+        { name: "Set Theory, Relations, Equivalence Relations & Function Mappings", tier: "B" },
+        { name: "Mathematical Logic: Propositions, Connectives, Truth Tables & Tautologies", tier: "A" },
+        { name: "Combinatorics: Permutations, Combinations & Pigeonhole Principle", tier: "B" },
+        { name: "Graph Theory: Graphs, Trees, Eulerian/Hamiltonian Graphs & Graph Traversals", tier: "A" },
+        { name: "Boolean Algebra, Logic Gates, Karnaugh Maps & Algebraic Structures (Groups, Rings)", tier: "B" }
+      ],
+      "C Programming": [
+        { name: "Problem Solving, C Language Basics, Data Types, Operators & I/O Functions", tier: "B" },
+        { name: "Control Structures: if-else, switch-case, while, do-while & for loops", tier: "A" },
+        { name: "Modular Programming: Functions, Passing by Value/Reference, Recursion & Storage Classes", tier: "A" },
+        { name: "1D and 2D Arrays, String Manipulation & Standard Library String Functions", tier: "A" },
+        { name: "Pointers, Pointer Arithmetic, Dynamic Memory Allocation, Structs, Unions & File I/O", tier: "A" }
+      ],
+      "Computer Architecture": [
+        { name: "Digital Logic: Logic Gates, Combinational Circuits, Multiplexers, Decoders & Sequential Latches", tier: "B" },
+        { name: "Register Transfer & Micro-operations, Bus Architecture & Memory Transfers", tier: "A" },
+        { name: "Basic Computer Organization: Instruction Codes, Computer Registers & Instruction Cycles", tier: "A" },
+        { name: "Central Processing Unit (CPU): General Register Organization, Stack & Addressing Modes", tier: "A" },
+        { name: "Memory Hierarchy: Main Memory, Auxiliary Memory, Cache Memory & Virtual Memory", tier: "B" }
+      ],
+      "Data Structures": [
+        { name: "Algorithm Analysis: Space/Time Complexity & Big-O Notation", tier: "B" },
+        { name: "Linear Data Structures: Stacks (Push, Pop, Infix-to-Postfix) & Queues (Linear, Circular, Deque)", tier: "A" },
+        { name: "Linked Lists: Singly Linked Lists, Doubly Linked Lists & Circular Linked Lists", tier: "A" },
+        { name: "Non-Linear Structures: Trees, Binary Trees, Binary Search Trees (BST) & Tree Traversals", tier: "A" },
+        { name: "Graph Representation (Adjacency Matrix/List), Graph Traversal (BFS/DFS), Searching & Sorting", tier: "A" }
+      ],
+      "DBMS": [
+        { name: "Database Concepts, Architecture (Three-Schema) & Entity-Relationship (ER) Modeling", tier: "A" },
+        { name: "Relational Model: Relational Data Structure, Integrity Constraints & Relational Algebra", tier: "A" },
+        { name: "Structured Query Language (SQL): DDL, DML, DCL, Aggregate Functions, Joins & Subqueries", tier: "A" },
+        { name: "Relational Database Design: Functional Dependencies & Normalization (1NF, 2NF, 3NF, BCNF)", tier: "A" },
+        { name: "Transaction Processing: ACID Properties, Serializability, Concurrency Control & Recovery", tier: "B" }
       ]
     };
 
     const COLLEGE_DISCIPLINES = {
-      'Medical & Allied': ['MBBS', 'BDS', 'BVSc Veterinary', 'BAMS Ayurvedic', 'Nursing'],
-      'Tech & Engineering': ['B.Tech / BE', 'BCA', 'MCA'],
+      'Medical & Allied': ['MBBS (First Prof CBME)', 'BDS', 'BVSc Veterinary', 'BAMS Ayurvedic', 'Nursing'],
+      'Tech & Engineering': ['B.Tech (First Year Common)', 'BCA', 'MCA'],
       'Finance & Law': ['CA', 'CS', 'B.Com'],
       'Custom Degree / Science': ['B.Sc', 'Other']
     };
 
     const COLLEGE_DEFAULT_COURSES = {
-      'MBBS': 'Anatomy, Physiology, Biochemistry',
+      'MBBS (First Prof CBME)': 'Human Anatomy, Human Physiology, Medical Biochemistry',
+      'MBBS': 'Human Anatomy, Human Physiology, Medical Biochemistry',
+      'B.Tech (First Year Common)': 'Engineering Mathematics, Engineering Physics/Chemistry, Programming in C/Python, Basic Electrical Engineering (BEE), Engineering Graphics',
+      'B.Tech / BE': 'Engineering Mathematics, Engineering Physics/Chemistry, Programming in C/Python, Basic Electrical Engineering (BEE), Engineering Graphics',
+      'BCA': 'Discrete Mathematics, C Programming, Computer Architecture, Data Structures, DBMS',
       'BDS': 'Human Anatomy, Dental Anatomy & Embryology, Biochemistry',
       'BVSc Veterinary': 'Veterinary Anatomy, Veterinary Physiology, Animal Nutrition',
       'BAMS Ayurvedic': 'Padartha Vigyan, Kriya Sharir, Rachna Sharir',
       'Nursing': 'Applied Anatomy & Physiology, Foundations of Nursing, Applied Biochemistry',
-      'B.Tech / BE': 'Data Structures, OS, Mathematics',
-      'BCA': 'Programming in C++, Database Management Systems, Computer Networks',
       'MCA': 'Advanced Algorithms, Cloud Computing & DevOps, Machine Learning',
       'CA': 'Financial Accounting, Corporate & Other Laws, Direct & Indirect Taxation',
       'CS': 'Jurisprudence & Interpretation, Company Law, Financial Management',
@@ -1744,11 +2175,11 @@
 
     const COMPETITIVE_GOALS = [
       { id: 'dropper_neet', title: 'Dropper - NEET', type: 'NEET', icon: '🩺', badge: 'Full 79 Chapters • PCBZ' },
-      { id: '12th_neet', title: '12th - NEET', type: 'NEET', icon: '🩺', badge: '12th Boards + NEET' },
-      { id: '11th_neet', title: '11th - NEET', type: 'NEET', icon: '🩺', badge: '11th Foundation + NEET' },
-      { id: 'dropper_jee', title: 'Dropper - IIT JEE', type: 'JEE', icon: '⚛️', badge: 'Main & Advanced • PCM' },
-      { id: '12th_jee', title: '12th - IIT JEE', type: 'JEE', icon: '⚛️', badge: '12th Boards + JEE' },
-      { id: '11th_jee', title: '11th - IIT JEE', type: 'JEE', icon: '⚛️', badge: '11th Foundation + JEE' },
+      { id: '12th_neet', title: '12th - NEET', type: 'NEET_12', icon: '🩺', badge: '12th PCB + English Core + Elective' },
+      { id: '11th_neet', title: '11th - NEET', type: 'NEET_11', icon: '🩺', badge: '11th PCB + English Core + Elective' },
+      { id: 'dropper_jee', title: 'Dropper - IIT JEE', type: 'JEE', icon: '⚛️', badge: 'Full Class 11+12 • PCM (67 Ch)' },
+      { id: '12th_jee', title: '12th - IIT JEE', type: 'JEE_12', icon: '⚛️', badge: '12th PCM + English Core + Elective' },
+      { id: '11th_jee', title: '11th - IIT JEE', type: 'JEE_11', icon: '⚛️', badge: '11th PCM + English Core + Elective' },
       { id: 'other_comp', title: 'Other Competitive Exam', type: 'OTHER', icon: '🎯', badge: 'Custom Horizon' }
     ];
 
@@ -1797,33 +2228,20 @@
       ]
     };
 
+    /* =========================================================================
+       SYLLABUS CONSTRUCTORS & BUILDERS
+       ========================================================================= */
     function buildInitial79Chapters() {
-      const highYieldA = [
-        "Rotational", "Optics", "Thermodynamics", "Electrostatics", "Current Electricity", "Semiconductor",
-        "Bonding", "Organic", "Aldehydes", "Equilibrium", "Coordination",
-        "Inheritance", "Molecular", "Cell", "Photosynthesis",
-        "Reproduction", "Biotechnology", "Circulation", "Chemical Coordination"
-      ];
-      const oneShotB = [
-        "Kinematic", "Laws of Motion", "Work", "Gravitation", "Waves", "Oscillations", "Dual Nature", "Atoms",
-        "Kinetics", "Solutions", "Electrochemistry", "Hydrocarbons", "Haloalkanes", "Amines", "p-Block",
-        "Respiration", "Plant Kingdom", "Biological", "Ecosystem", "Biodiversity",
-        "Breathing", "Excretory", "Locomotion", "Neural", "Evolution", "Health"
-      ];
-
       const list = [];
       let idCounter = 1;
-      Object.keys(NEET_SYLLABUS).forEach(sub => {
-        NEET_SYLLABUS[sub].forEach(chName => {
-          let tier = 'C';
-          if (highYieldA.some(kw => chName.includes(kw))) tier = 'A';
-          else if (oneShotB.some(kw => chName.includes(kw))) tier = 'B';
-
+      Object.keys(NEET_SYLLABUS_DETAILED).forEach(sub => {
+        NEET_SYLLABUS_DETAILED[sub].forEach(ch => {
           list.push({
             id: 's' + (idCounter++),
-            name: chName,
+            name: ch.name,
             subject: sub,
-            tier: tier,
+            classLevel: ch.classLevel,
+            tier: ch.tier || 'B',
             status: 'unstarted'
           });
         });
@@ -1831,19 +2249,209 @@
       return list;
     }
 
+    function buildNeetSyllabus(mode = 'dropper', electives = []) {
+      if (mode === 'dropper') {
+        return buildInitial79Chapters();
+      }
+      const targetClass = (mode === '12th' || mode === '12') ? 12 : 11;
+      const list = [];
+      let idCounter = 1;
+
+      // Filter respective Class PCB
+      Object.keys(NEET_SYLLABUS_DETAILED).forEach(sub => {
+        NEET_SYLLABUS_DETAILED[sub].forEach(ch => {
+          if (ch.classLevel === targetClass) {
+            list.push({
+              id: 's' + (idCounter++),
+              name: ch.name,
+              subject: sub,
+              classLevel: ch.classLevel,
+              tier: ch.tier || 'B',
+              status: 'unstarted'
+            });
+          }
+        });
+      });
+
+      // Preload English Core
+      const engModules = ENGLISH_CORE_SYLLABUS[targetClass] || ENGLISH_CORE_SYLLABUS[12];
+      engModules.forEach(em => {
+        list.push({
+          id: 'eng_' + (idCounter++),
+          name: em.name,
+          subject: 'English Core',
+          classLevel: targetClass,
+          tier: em.tier || 'A',
+          status: 'unstarted'
+        });
+      });
+
+      // Add Elective Subjects if selected
+      if (Array.isArray(electives)) {
+        electives.forEach(elecName => {
+          const elecChapters = ELECTIVE_SYLLABI[elecName];
+          if (elecChapters && elecChapters.length > 0) {
+            elecChapters.forEach(ec => {
+              list.push({
+                id: 'elec_' + (idCounter++),
+                name: ec.name,
+                subject: elecName,
+                classLevel: targetClass,
+                tier: ec.tier || 'B',
+                status: 'unstarted'
+              });
+            });
+          } else if (elecName && elecName.trim()) {
+            // Custom elective modules
+            for (let i = 1; i <= 5; i++) {
+              list.push({
+                id: 'elec_' + (idCounter++),
+                name: `${elecName} — Module ${i}: Core Fundamentals & Problem Sets`,
+                subject: elecName,
+                classLevel: targetClass,
+                tier: i === 1 || i === 5 ? 'A' : 'B',
+                status: 'unstarted'
+              });
+            }
+          }
+        });
+      }
+
+      return list;
+    }
+
     function buildInitialJeeChapters() {
       const list = [];
       let idCounter = 1;
-      Object.keys(JEE_SYLLABUS).forEach(sub => {
-        JEE_SYLLABUS[sub].forEach((chName, idx) => {
-          let tier = 'B';
-          if (idx < 5) tier = 'A';
-          else if (idx >= 9) tier = 'C';
+      Object.keys(JEE_SYLLABUS_DETAILED).forEach(sub => {
+        JEE_SYLLABUS_DETAILED[sub].forEach(ch => {
           list.push({
             id: 'jee_' + (idCounter++),
-            name: chName,
+            name: ch.name,
             subject: sub,
-            tier: tier,
+            classLevel: ch.classLevel,
+            tier: ch.tier || 'B',
+            status: 'unstarted'
+          });
+        });
+      });
+      return list;
+    }
+
+    function buildJeeSyllabus(mode = 'dropper', electives = []) {
+      if (mode === 'dropper') {
+        return buildInitialJeeChapters();
+      }
+      const targetClass = (mode === '12th' || mode === '12') ? 12 : 11;
+      const list = [];
+      let idCounter = 1;
+
+      // Filter respective Class PCM
+      Object.keys(JEE_SYLLABUS_DETAILED).forEach(sub => {
+        JEE_SYLLABUS_DETAILED[sub].forEach(ch => {
+          if (ch.classLevel === targetClass) {
+            list.push({
+              id: 'jee_' + (idCounter++),
+              name: ch.name,
+              subject: sub,
+              classLevel: ch.classLevel,
+              tier: ch.tier || 'B',
+              status: 'unstarted'
+            });
+          }
+        });
+      });
+
+      // Preload English Core
+      const engModules = ENGLISH_CORE_SYLLABUS[targetClass] || ENGLISH_CORE_SYLLABUS[12];
+      engModules.forEach(em => {
+        list.push({
+          id: 'eng_' + (idCounter++),
+          name: em.name,
+          subject: 'English Core',
+          classLevel: targetClass,
+          tier: em.tier || 'A',
+          status: 'unstarted'
+        });
+      });
+
+      // Add Elective Subjects if selected
+      if (Array.isArray(electives)) {
+        electives.forEach(elecName => {
+          const elecChapters = ELECTIVE_SYLLABI[elecName];
+          if (elecChapters && elecChapters.length > 0) {
+            elecChapters.forEach(ec => {
+              list.push({
+                id: 'elec_' + (idCounter++),
+                name: ec.name,
+                subject: elecName,
+                classLevel: targetClass,
+                tier: ec.tier || 'B',
+                status: 'unstarted'
+              });
+            });
+          } else if (elecName && elecName.trim()) {
+            for (let i = 1; i <= 5; i++) {
+              list.push({
+                id: 'elec_' + (idCounter++),
+                name: `${elecName} — Module ${i}: Core Fundamentals & Problem Sets`,
+                subject: elecName,
+                classLevel: targetClass,
+                tier: i === 1 || i === 5 ? 'A' : 'B',
+                status: 'unstarted'
+              });
+            }
+          }
+        });
+      }
+
+      return list;
+    }
+
+    function buildMbbsCbmeSyllabus() {
+      const list = [];
+      let idCounter = 1;
+      Object.keys(MBBS_CBME_SYLLABUS).forEach(sub => {
+        MBBS_CBME_SYLLABUS[sub].forEach(ch => {
+          list.push({
+            id: 'mbbs_' + (idCounter++),
+            name: `${sub}: ${ch.name}`,
+            subject: sub,
+            tier: ch.tier || 'A',
+            status: 'unstarted'
+          });
+        });
+      });
+      return list;
+    }
+
+    function buildBtechFirstYearSyllabus() {
+      const list = [];
+      let idCounter = 1;
+      Object.keys(BTECH_FIRST_YEAR_SYLLABUS).forEach(sub => {
+        BTECH_FIRST_YEAR_SYLLABUS[sub].forEach(ch => {
+          list.push({
+            id: 'btech_' + (idCounter++),
+            name: `${sub}: ${ch.name}`,
+            subject: sub,
+            tier: ch.tier || 'B',
+            status: 'unstarted'
+          });
+        });
+      });
+      return list;
+    }
+
+    function buildBcaSyllabus() {
+      const list = [];
+      let idCounter = 1;
+      Object.keys(BCA_SYLLABUS).forEach(sub => {
+        BCA_SYLLABUS[sub].forEach(ch => {
+          list.push({
+            id: 'bca_' + (idCounter++),
+            name: `${sub}: ${ch.name}`,
+            subject: sub,
+            tier: ch.tier || 'B',
             status: 'unstarted'
           });
         });
@@ -1902,8 +2510,14 @@
       if (/botan/i.test(s)) return NEET_SYLLABUS.Botany;
       if (/zool/i.test(s)) return NEET_SYLLABUS.Zoology;
       if (/math/i.test(s)) return JEE_SYLLABUS.Mathematics;
+      if (/english/i.test(s)) return (ENGLISH_CORE_SYLLABUS[12] || []).map(c => c.name);
+      if (/anatomy/i.test(s)) return (MBBS_CBME_SYLLABUS["Human Anatomy"] || []).map(c => c.name);
+      if (/physiology/i.test(s)) return (MBBS_CBME_SYLLABUS["Human Physiology"] || []).map(c => c.name);
+      if (/biochemistry/i.test(s)) return (MBBS_CBME_SYLLABUS["Medical Biochemistry"] || []).map(c => c.name);
+      if (ELECTIVE_SYLLABI[subject]) return ELECTIVE_SYLLABI[subject].map(c => c.name);
       return [`${subject} — Unit 1`, `${subject} — Unit 2`, `${subject} — Unit 3`, `${subject} — Unit 4`];
     }
+
 
     /* =========================================================================
        2. INITIAL STATE CONSTRUCTORS & PERSISTENCE
@@ -2088,13 +2702,18 @@
       syllabusDeadlineDate: null,
       dreamCollege: '',
       selectedDiscipline: 'Medical & Allied',
-      selectedDegree: 'MBBS',
+      selectedDegree: 'MBBS (First Prof CBME)',
       selectedYear: 'Year 1',
       selectedSem: 'Sem 1',
-      collegeCourses: 'Anatomy, Physiology, Biochemistry',
-      targetGoal: '8.5+ CGPA',
+      collegeCourses: 'Human Anatomy, Human Physiology, Medical Biochemistry',
+      targetGoal: '700+ Score in NEET UG',
       examDate: null,
-      isFirstRun: true
+      isFirstRun: true,
+      selectedElectives: [],
+      stagedSyllabus: [],
+      activeBaselineSubjectTab: 'ALL',
+      baselineSearchQuery: '',
+      currentModeTab: 'dates'
     };
 
     function openOnboardingModal(forceFirstRun = false) {
@@ -2103,6 +2722,7 @@
 
       const modal = document.getElementById('onboardingModal');
       const closeBtn = document.getElementById('onboardingCloseBtn');
+      const modeTabs = document.getElementById('onboardingModeTabs');
       const mainHeading = document.getElementById('onboardingMainHeading');
       const subtitle = document.getElementById('onboardingSubtitle');
 
@@ -2110,15 +2730,27 @@
 
       if (onboardingState.isFirstRun) {
         if (closeBtn) closeBtn.classList.add('hidden');
+        if (modeTabs) modeTabs.classList.add('hidden');
         if (mainHeading) mainHeading.innerText = 'Hello, welcome to Study Flow 👋';
         if (subtitle) subtitle.innerText = 'What is your primary academic goal?';
+        goBackOnboardingStep();
       } else {
         if (closeBtn) closeBtn.classList.remove('hidden');
-        if (mainHeading) mainHeading.innerText = 'Change Your Exam / Degree Goal';
-        if (subtitle) subtitle.innerText = 'Switch your academic category or calibrate target deadlines.';
+        if (modeTabs) modeTabs.classList.remove('hidden');
+        if (mainHeading) mainHeading.innerText = 'Goal & Starting Baseline';
+        if (subtitle) subtitle.innerText = 'Adjust target completion dates or calibrate baseline chapter mastery anytime.';
+        
+        // Populate from active profile
+        if (appState.profile) {
+          onboardingState.category = appState.profile.category || 'competitive';
+          onboardingState.selectedGoal = appState.profile.goalTitle || 'Dropper - NEET';
+          onboardingState.selectedElectives = Array.isArray(appState.profile.electives) ? [...appState.profile.electives] : [];
+          onboardingState.stagedSyllabus = appState.syllabus ? JSON.parse(JSON.stringify(appState.syllabus)) : [];
+          onboardingState.stagedDeadlineMs = appState.syllabusDeadline || (Date.now() + 120 * 86400000);
+          onboardingState.syllabusDeadlineDate = onboardingState.stagedDeadlineMs;
+        }
+        switchOnboardingModeTab('dates');
       }
-
-      goBackOnboardingStep();
     }
 
     function closeOnboardingModal() {
@@ -2133,6 +2765,49 @@
       openOnboardingModal(false);
     }
 
+    function openBaselineCalibrationDirectly() {
+      openOnboardingModal(false);
+      switchOnboardingModeTab('baseline');
+    }
+
+    function switchOnboardingModeTab(mode) {
+      playTactileFeedback('click');
+      onboardingState.currentModeTab = mode;
+
+      const tabDates = document.getElementById('modalTabGoalDates');
+      const tabBase = document.getElementById('modalTabBaseline');
+
+      if (mode === 'dates') {
+        if (tabDates) {
+          tabDates.className = 'spring-press py-2 px-3 rounded-xl border border-cyan-400/50 bg-cyan-500/20 text-cyan-200 text-xs font-bold text-center shadow-[0_0_12px_rgba(6,182,212,0.2)]';
+        }
+        if (tabBase) {
+          tabBase.className = 'spring-press py-2 px-3 rounded-xl border border-white/10 bg-white/5 text-zinc-400 text-xs font-bold text-center hover:text-white';
+        }
+
+        // Show Step 2A or 2B based on category
+        const cat = onboardingState.category || (appState.profile ? appState.profile.category : 'competitive');
+        selectOnboardingCategory(cat);
+      } else {
+        if (tabDates) {
+          tabDates.className = 'spring-press py-2 px-3 rounded-xl border border-white/10 bg-white/5 text-zinc-400 text-xs font-bold text-center hover:text-white';
+        }
+        if (tabBase) {
+          tabBase.className = 'spring-press py-2 px-3 rounded-xl border border-cyan-400/50 bg-cyan-500/20 text-cyan-200 text-xs font-bold text-center shadow-[0_0_12px_rgba(6,182,212,0.2)]';
+        }
+
+        // If no staged syllabus, build or load current
+        if (!onboardingState.stagedSyllabus || onboardingState.stagedSyllabus.length === 0) {
+          if (appState.syllabus && appState.syllabus.length > 0) {
+            onboardingState.stagedSyllabus = JSON.parse(JSON.stringify(appState.syllabus));
+          } else {
+            onboardingState.stagedSyllabus = buildInitial79Chapters();
+          }
+        }
+        showOnboardingStep3();
+      }
+    }
+
     function selectOnboardingCategory(category) {
       playTactileFeedback('click');
       onboardingState.category = category;
@@ -2140,17 +2815,21 @@
       const step1 = document.getElementById('onboardingStep1');
       const step2A = document.getElementById('onboardingStep2A');
       const step2B = document.getElementById('onboardingStep2B');
+      const step3 = document.getElementById('onboardingStep3');
       const backBtn = document.getElementById('onboardingBackBtn');
       const dot1 = document.getElementById('stepDot1');
       const dot2 = document.getElementById('stepDot2');
+      const dot3 = document.getElementById('stepDot3');
       const subtitle = document.getElementById('onboardingSubtitle');
 
       if (step1) step1.classList.add('hidden');
+      if (step3) step3.classList.add('hidden');
       if (backBtn) backBtn.classList.remove('hidden');
 
-      if (dot1 && dot2) {
+      if (dot1 && dot2 && dot3) {
         dot1.className = 'w-2.5 h-1.5 rounded-full bg-white/20 transition-all';
         dot2.className = 'w-7 h-1.5 rounded-full bg-cyan-400 transition-all';
+        dot3.className = 'w-2.5 h-1.5 rounded-full bg-white/20 transition-all';
       }
 
       if (category === 'competitive') {
@@ -2158,15 +2837,16 @@
         if (step2B) step2B.classList.add('hidden');
         if (subtitle) subtitle.innerText = 'Select your competitive exam goal & target completion date.';
         renderCompetitiveGoalsList();
-        selectSyllabusPreset('Dec 31');
+        selectSyllabusPreset(onboardingState.syllabusPreset || 'Dec 31');
+        renderBoardElectivesUI();
         updateCompetitiveCalibrationCard();
       } else {
         if (step2A) step2A.classList.add('hidden');
         if (step2B) step2B.classList.remove('hidden');
-        if (subtitle) subtitle.innerText = 'Select your discipline, year/sem, and enter active courses.';
+        if (subtitle) subtitle.innerText = 'Select your discipline, year/sem, and course modules.';
         renderCollegeDegreesList();
         renderCollegeYearSemChips();
-        selectCollegeDegree('MBBS', 'Medical & Allied');
+        selectCollegeDegree(onboardingState.selectedDegree || 'MBBS (First Prof CBME)', 'Medical & Allied');
       }
     }
 
@@ -2175,24 +2855,47 @@
       const step1 = document.getElementById('onboardingStep1');
       const step2A = document.getElementById('onboardingStep2A');
       const step2B = document.getElementById('onboardingStep2B');
+      const step3 = document.getElementById('onboardingStep3');
       const backBtn = document.getElementById('onboardingBackBtn');
       const dot1 = document.getElementById('stepDot1');
       const dot2 = document.getElementById('stepDot2');
+      const dot3 = document.getElementById('stepDot3');
       const subtitle = document.getElementById('onboardingSubtitle');
+      const heading = document.getElementById('onboardingMainHeading');
 
+      // If on Step 3, go back to Step 2
+      if (step3 && !step3.classList.contains('hidden')) {
+        step3.classList.add('hidden');
+        if (onboardingState.category === 'college') {
+          if (step2B) step2B.classList.remove('hidden');
+        } else {
+          if (step2A) step2A.classList.remove('hidden');
+        }
+        if (dot1 && dot2 && dot3) {
+          dot1.className = 'w-2.5 h-1.5 rounded-full bg-white/20 transition-all';
+          dot2.className = 'w-7 h-1.5 rounded-full bg-cyan-400 transition-all';
+          dot3.className = 'w-2.5 h-1.5 rounded-full bg-white/20 transition-all';
+        }
+        if (heading) heading.innerText = onboardingState.isFirstRun ? 'Hello, welcome to Study Flow 👋' : 'Change Your Exam / Degree Goal';
+        if (subtitle) subtitle.innerText = 'Select your target horizon & academic deadline.';
+        return;
+      }
+
+      // If on Step 2, go back to Step 1
       if (step1) step1.classList.remove('hidden');
       if (step2A) step2A.classList.add('hidden');
       if (step2B) step2B.classList.add('hidden');
+      if (step3) step3.classList.add('hidden');
       if (backBtn) backBtn.classList.add('hidden');
 
-      if (dot1 && dot2) {
+      if (dot1 && dot2 && dot3) {
         dot1.className = 'w-7 h-1.5 rounded-full bg-cyan-400 transition-all';
         dot2.className = 'w-2.5 h-1.5 rounded-full bg-white/20 transition-all';
+        dot3.className = 'w-2.5 h-1.5 rounded-full bg-white/20 transition-all';
       }
 
-      if (subtitle) {
-        subtitle.innerText = onboardingState.isFirstRun ? 'What is your primary academic goal?' : 'Switch your academic category or calibrate target deadlines.';
-      }
+      if (heading) heading.innerText = onboardingState.isFirstRun ? 'Hello, welcome to Study Flow 👋' : 'Change Your Exam / Degree Goal';
+      if (subtitle) subtitle.innerText = onboardingState.isFirstRun ? 'What is your primary academic goal?' : 'Switch your academic category or calibrate target deadlines.';
     }
 
     function renderCompetitiveGoalsList() {
@@ -2231,6 +2934,92 @@
       playTactileFeedback('click');
       onboardingState.selectedGoal = goalTitle;
       renderCompetitiveGoalsList();
+      renderBoardElectivesUI();
+      updateCompetitiveCalibrationCard();
+    }
+
+    function renderBoardElectivesUI() {
+      const container = document.getElementById('boardElectiveContainer');
+      const chipList = document.getElementById('boardSubjectsChipList');
+      if (!container || !chipList) return;
+
+      const isBoard = /12th|11th/i.test(onboardingState.selectedGoal);
+      if (!isBoard) {
+        container.classList.add('hidden');
+        return;
+      }
+      container.classList.remove('hidden');
+      chipList.innerHTML = '';
+
+      const isNeet = /neet/i.test(onboardingState.selectedGoal);
+      const isJee = /jee/i.test(onboardingState.selectedGoal);
+
+      let core = isNeet ? ['Physics', 'Chemistry', 'Botany', 'Zoology'] : (isJee ? ['Physics', 'Chemistry', 'Mathematics'] : ['Core 1', 'Core 2']);
+      core.forEach(sub => {
+        const c = document.createElement('span');
+        c.className = 'px-2 py-0.5 rounded-lg bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 text-[10px] font-bold';
+        c.innerText = sub;
+        chipList.appendChild(c);
+      });
+
+      // English Core Chip
+      const engChip = document.createElement('span');
+      engChip.className = 'px-2 py-0.5 rounded-lg bg-purple-500/25 text-purple-300 border border-purple-400/50 text-[10px] font-bold flex items-center gap-1';
+      engChip.innerHTML = '<span>📖 English Core</span> <span class="text-[9px] text-purple-400 font-mono">CBSE</span>';
+      chipList.appendChild(engChip);
+
+      // Selected Electives Chips
+      (onboardingState.selectedElectives || []).forEach(elec => {
+        const elChip = document.createElement('span');
+        elChip.className = 'px-2 py-0.5 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-400/50 text-[10px] font-bold flex items-center gap-1.5';
+        elChip.innerHTML = `
+          <span>✨ ${elec}</span>
+          <button type="button" onclick="removeElective('${elec}')" class="text-zinc-400 hover:text-rose-400 text-xs font-bold leading-none">✕</button>
+        `;
+        chipList.appendChild(elChip);
+      });
+    }
+
+    function openAddElectiveModal() {
+      playTactileFeedback('click');
+      document.getElementById('addElectiveModal')?.classList.remove('hidden');
+    }
+
+    function closeAddElectiveModal() {
+      document.getElementById('addElectiveModal')?.classList.add('hidden');
+    }
+
+    function selectPredefinedElective(name) {
+      playTactileFeedback('chime');
+      if (!onboardingState.selectedElectives) onboardingState.selectedElectives = [];
+      if (!onboardingState.selectedElectives.includes(name)) {
+        onboardingState.selectedElectives.push(name);
+      }
+      closeAddElectiveModal();
+      renderBoardElectivesUI();
+      updateCompetitiveCalibrationCard();
+    }
+
+    function addCustomElective() {
+      const input = document.getElementById('customElectiveInput');
+      const val = input ? input.value.trim() : '';
+      if (!val) return;
+      playTactileFeedback('chime');
+      if (!onboardingState.selectedElectives) onboardingState.selectedElectives = [];
+      if (!onboardingState.selectedElectives.includes(val)) {
+        onboardingState.selectedElectives.push(val);
+      }
+      input.value = '';
+      closeAddElectiveModal();
+      renderBoardElectivesUI();
+      updateCompetitiveCalibrationCard();
+    }
+
+    function removeElective(name) {
+      playTactileFeedback('click');
+      if (!onboardingState.selectedElectives) return;
+      onboardingState.selectedElectives = onboardingState.selectedElectives.filter(e => e !== name);
+      renderBoardElectivesUI();
       updateCompetitiveCalibrationCard();
     }
 
@@ -2251,6 +3040,7 @@
       }
 
       onboardingState.syllabusDeadlineDate = targetDate ? targetDate.getTime() : (Date.now() + 120 * 86400000);
+      onboardingState.stagedDeadlineMs = onboardingState.syllabusDeadlineDate;
 
       const presets = ['Dec 31', 'Jan 31', 'Feb 28'];
       presets.forEach(p => {
@@ -2277,6 +3067,7 @@
       playTactileFeedback('click');
       onboardingState.syllabusPreset = 'Custom';
       onboardingState.syllabusDeadlineDate = new Date(val + 'T23:59:59').getTime();
+      onboardingState.stagedDeadlineMs = onboardingState.syllabusDeadlineDate;
 
       ['Dec 31', 'Jan 31', 'Feb 28'].forEach(p => {
         const btn = document.getElementById(`presetBtn${p.replace(' ', '')}`);
@@ -2289,90 +3080,410 @@
     function updateCompetitiveCalibrationCard() {
       const card = document.getElementById('calibrationPreviewCard');
       if (!card) return;
-      const isNeet = /neet/i.test(onboardingState.selectedGoal);
-      const isJee = /jee/i.test(onboardingState.selectedGoal);
+      const goal = onboardingState.selectedGoal || 'Dropper - NEET';
+      const isNeet = /neet/i.test(goal);
+      const isJee = /jee/i.test(goal);
+      const is12th = /12th/i.test(goal);
+      const is11th = /11th/i.test(goal);
 
+      let subNote = '';
       if (isNeet) {
-        card.innerHTML = `
-          <div class="font-bold text-cyan-300 flex items-center gap-1.5 mb-1">
-            <span>⚡</span><span>Auto-Calibrated for NEET UG:</span>
-          </div>
-          <div class="text-[11px] text-zinc-300 space-y-0.5">
-            <div>• <strong>Countdown Target:</strong> First Sunday of May (Official NEET UG Window)</div>
-            <div>• <strong>Pre-Loaded Syllabus:</strong> 79 Official NEET Chapters (Physics, Chemistry, Botany, Zoology)</div>
-            <div>• <strong>Active Subject Chips:</strong> [Physics, Chemistry, Botany, Zoology]</div>
-          </div>
-        `;
+        if (is12th) subNote = '37 Class 12 PCB Chapters + Preloaded English Core (Flamingo & Vistas)';
+        else if (is11th) subNote = '42 Class 11 PCB Chapters + Preloaded English Core (Hornbill & Snapshots)';
+        else subNote = 'Full Official 79 Chapters (Physics 25, Chemistry 22, Botany 17, Zoology 15)';
       } else if (isJee) {
-        card.innerHTML = `
-          <div class="font-bold text-cyan-300 flex items-center gap-1.5 mb-1">
-            <span>⚡</span><span>Auto-Calibrated for IIT JEE:</span>
-          </div>
-          <div class="text-[11px] text-zinc-300 space-y-0.5">
-            <div>• <strong>Countdown Target:</strong> Jan / Apr JEE Main Windows</div>
-            <div>• <strong>Pre-Loaded Syllabus:</strong> Core JEE Syllabus (Physics, Chemistry, Mathematics)</div>
-            <div>• <strong>Active Subject Chips:</strong> [Physics, Chemistry, Mathematics]</div>
-          </div>
-        `;
+        if (is12th) subNote = '33 Class 12 PCM Chapters + Preloaded English Core';
+        else if (is11th) subNote = '34 Class 11 PCM Chapters + Preloaded English Core';
+        else subNote = 'Full 67 JEE Main & Advanced Chapters (Physics 25, Chemistry 21, Mathematics 21)';
       } else {
-        card.innerHTML = `
-          <div class="font-bold text-cyan-300 flex items-center gap-1.5 mb-1">
-            <span>⚡</span><span>Auto-Calibrated for Competitive Prep:</span>
-          </div>
-          <div class="text-[11px] text-zinc-300 space-y-0.5">
-            <div>• <strong>Countdown Target:</strong> Target Syllabus Completion Horizon</div>
-            <div>• <strong>Active Subject Chips:</strong> Dynamic multi-subject tracking</div>
-          </div>
-        `;
+        subNote = 'Custom Modular Academic Units';
       }
+
+      const elecCount = (onboardingState.selectedElectives || []).length;
+      const elecNote = elecCount > 0 ? ` + ${elecCount} Elective (${onboardingState.selectedElectives.join(', ')})` : '';
+
+      card.innerHTML = `
+        <div class="font-bold text-cyan-300 flex items-center gap-1.5 mb-1">
+          <span>⚡</span><span>Auto-Calibrated for ${goal}:</span>
+        </div>
+        <div class="text-[11px] text-zinc-300 space-y-0.5">
+          <div>• <strong>Countdown Window:</strong> ${isNeet ? 'First Sunday of May' : (isJee ? 'Jan/Apr JEE Horizon' : 'Custom Target Window')}</div>
+          <div>• <strong>Pre-Loaded Syllabus:</strong> ${subNote}${elecNote}</div>
+          <div>• <strong>Baseline Engine:</strong> 3-State Progress Tracking (⚪ 0% ➔ 🟡 50% ➔ 🟢 100%)</div>
+        </div>
+      `;
     }
 
-    function submitCompetitiveOnboarding() {
-      playTactileFeedback('chime');
-      const goalTitle = onboardingState.selectedGoal;
-      const isNeet = /neet/i.test(goalTitle);
-      const isJee = /jee/i.test(goalTitle);
+    /* =========================================================================
+       STEP 3: BASELINE CALIBRATION ENGINE
+       ========================================================================= */
+    function proceedToBaselineCalibration(category) {
+      playTactileFeedback('click');
+      
+      let goalTitle = '';
+      let goalType = '';
+      let subjects = [];
+      let syllabusCandidate = [];
+      let targetGoal = '';
+      let examDate = '';
+      let deadlineMs = onboardingState.syllabusDeadlineDate || (Date.now() + 120 * 86400000);
 
-      let goalType = 'OTHER';
-      let subjects = ['Physics', 'Chemistry', 'Mathematics', 'Aptitude'];
-      let syllabus = [];
+      if (category === 'competitive') {
+        goalTitle = onboardingState.selectedGoal || 'Dropper - NEET';
+        const isNeet = /neet/i.test(goalTitle);
+        const isJee = /jee/i.test(goalTitle);
+        const is12th = /12th/i.test(goalTitle);
+        const is11th = /11th/i.test(goalTitle);
 
-      if (isNeet) {
-        goalType = 'NEET';
-        subjects = ['Physics', 'Chemistry', 'Botany', 'Zoology'];
-        syllabus = buildInitial79Chapters();
-      } else if (isJee) {
-        goalType = 'JEE';
-        subjects = ['Physics', 'Chemistry', 'Mathematics'];
-        syllabus = buildInitialJeeChapters();
+        if (isNeet) {
+          if (is12th) {
+            goalType = 'NEET_12';
+            syllabusCandidate = buildNeetSyllabus('12th', onboardingState.selectedElectives);
+            subjects = ['Physics', 'Chemistry', 'Botany', 'Zoology', 'English Core', ...(onboardingState.selectedElectives || [])];
+          } else if (is11th) {
+            goalType = 'NEET_11';
+            syllabusCandidate = buildNeetSyllabus('11th', onboardingState.selectedElectives);
+            subjects = ['Physics', 'Chemistry', 'Botany', 'Zoology', 'English Core', ...(onboardingState.selectedElectives || [])];
+          } else {
+            goalType = 'NEET';
+            syllabusCandidate = buildInitial79Chapters();
+            subjects = ['Physics', 'Chemistry', 'Botany', 'Zoology'];
+          }
+          targetGoal = '700+ Score in NEET UG';
+          examDate = getUpcomingNeetTargetDate().toISOString();
+        } else if (isJee) {
+          if (is12th) {
+            goalType = 'JEE_12';
+            syllabusCandidate = buildJeeSyllabus('12th', onboardingState.selectedElectives);
+            subjects = ['Physics', 'Chemistry', 'Mathematics', 'English Core', ...(onboardingState.selectedElectives || [])];
+          } else if (is11th) {
+            goalType = 'JEE_11';
+            syllabusCandidate = buildJeeSyllabus('11th', onboardingState.selectedElectives);
+            subjects = ['Physics', 'Chemistry', 'Mathematics', 'English Core', ...(onboardingState.selectedElectives || [])];
+          } else {
+            goalType = 'JEE';
+            syllabusCandidate = buildInitialJeeChapters();
+            subjects = ['Physics', 'Chemistry', 'Mathematics'];
+          }
+          targetGoal = '99.5+ Percentile in JEE';
+          examDate = new Date(2027, 0, 24).toISOString();
+        } else {
+          goalType = 'OTHER';
+          subjects = ['General Aptitude', 'Core Section A', 'Core Section B'];
+          syllabusCandidate = buildInitialModularUnits(subjects);
+          targetGoal = 'High Score in Finals';
+          examDate = new Date(deadlineMs).toISOString();
+        }
       } else {
-        goalType = 'OTHER';
-        syllabus = buildInitialModularUnits(['General Aptitude', 'Core Section A', 'Core Section B']);
+        // College Degree
+        const degree = onboardingState.selectedDegree || 'MBBS (First Prof CBME)';
+        goalTitle = `${degree} (${onboardingState.selectedYear || 'Year 1'})`;
+        goalType = 'COLLEGE';
+
+        if (degree.includes('MBBS')) {
+          syllabusCandidate = buildMbbsCbmeSyllabus();
+          subjects = ['Human Anatomy', 'Human Physiology', 'Medical Biochemistry'];
+        } else if (degree.includes('B.Tech') || degree.includes('BE')) {
+          syllabusCandidate = buildBtechFirstYearSyllabus();
+          subjects = ['Engineering Mathematics', 'Engineering Physics/Chemistry', 'Programming in C/Python', 'Basic Electrical Engineering (BEE)', 'Engineering Graphics'];
+        } else if (degree.includes('BCA')) {
+          syllabusCandidate = buildBcaSyllabus();
+          subjects = ['Discrete Mathematics', 'C Programming', 'Computer Architecture', 'Data Structures', 'DBMS'];
+        } else {
+          const rawCourses = document.getElementById('onboardingCollegeCoursesInput')?.value || onboardingState.collegeCourses || 'Course 1, Course 2';
+          subjects = rawCourses.split(/[,;\n]/).map(s => s.trim()).filter(Boolean);
+          syllabusCandidate = buildInitialModularUnits(subjects);
+        }
+
+        targetGoal = document.getElementById('onboardingTargetGoalInput')?.value.trim() || '8.5+ CGPA';
+        const examDateVal = document.getElementById('onboardingCollegeExamDate')?.value;
+        deadlineMs = examDateVal ? new Date(examDateVal + 'T23:59:59').getTime() : (Date.now() + 90 * 86400000);
+        examDate = new Date(deadlineMs).toISOString();
+      }
+
+      // Preserve existing status if adjusting
+      if (appState && appState.syllabus && appState.syllabus.length > 0) {
+        const existingStatusMap = new Map();
+        appState.syllabus.forEach(s => existingStatusMap.set(s.name.toLowerCase().trim(), s.status));
+        syllabusCandidate.forEach(c => {
+          const key = c.name.toLowerCase().trim();
+          if (existingStatusMap.has(key)) {
+            c.status = existingStatusMap.get(key);
+          }
+        });
       }
 
       const collegeInput = document.getElementById('onboardingCollegeInput');
       const chosenCollege = collegeInput ? collegeInput.value.trim() : '';
 
+      onboardingState.stagedCategory = category;
+      onboardingState.stagedGoalTitle = goalTitle;
+      onboardingState.stagedGoalType = goalType;
+      onboardingState.stagedSubjects = subjects;
+      onboardingState.stagedTargetGoal = targetGoal;
+      onboardingState.stagedExamDate = examDate;
+      onboardingState.stagedDeadlineMs = deadlineMs;
+      onboardingState.stagedDreamCollege = chosenCollege;
+      onboardingState.stagedSyllabus = syllabusCandidate;
+      onboardingState.activeBaselineSubjectTab = 'ALL';
+      onboardingState.baselineSearchQuery = '';
+
+      showOnboardingStep3();
+    }
+
+    function showOnboardingStep3() {
+      document.getElementById('onboardingStep1')?.classList.add('hidden');
+      document.getElementById('onboardingStep2A')?.classList.add('hidden');
+      document.getElementById('onboardingStep2B')?.classList.add('hidden');
+      document.getElementById('onboardingStep3')?.classList.remove('hidden');
+
+      const dot1 = document.getElementById('stepDot1');
+      const dot2 = document.getElementById('stepDot2');
+      const dot3 = document.getElementById('stepDot3');
+      if (dot1 && dot2 && dot3) {
+        dot1.className = 'w-2.5 h-1.5 rounded-full bg-white/20 transition-all';
+        dot2.className = 'w-2.5 h-1.5 rounded-full bg-white/20 transition-all';
+        dot3.className = 'w-7 h-1.5 rounded-full bg-cyan-400 transition-all';
+      }
+
+      const backBtn = document.getElementById('onboardingBackBtn');
+      if (backBtn) backBtn.classList.remove('hidden');
+
+      const heading = document.getElementById('onboardingMainHeading');
+      const subtitle = document.getElementById('onboardingSubtitle');
+      if (heading) heading.innerText = 'Calibrate Your Starting Baseline';
+      if (subtitle) subtitle.innerText = 'Mark what you\'ve already completed or started so your pacing and study planner are 100% accurate.';
+
+      renderBaselineSubjectTabs();
+      renderBaselineChapterList();
+      updateBaselineLiveBanner();
+    }
+
+    function renderBaselineSubjectTabs() {
+      const container = document.getElementById('baselineSubjectTabsContainer');
+      if (!container) return;
+      container.innerHTML = '';
+
+      const syllabus = onboardingState.stagedSyllabus || [];
+      const distinctSubs = [];
+      syllabus.forEach(ch => {
+        if (!distinctSubs.includes(ch.subject)) distinctSubs.push(ch.subject);
+      });
+
+      const currentActive = onboardingState.activeBaselineSubjectTab || 'ALL';
+
+      // 'ALL' button
+      const allBtn = document.createElement('button');
+      allBtn.type = 'button';
+      allBtn.onclick = () => filterBaselineBySubject('ALL');
+      allBtn.className = `spring-press px-2.5 py-1 rounded-xl font-bold text-[11px] whitespace-nowrap transition-all ${
+        currentActive === 'ALL' ? 'bg-cyan-500/25 border border-cyan-400 text-cyan-200 shadow-[0_0_10px_rgba(6,182,212,0.2)]' : 'bg-white/5 border border-white/10 text-zinc-400 hover:text-white'
+      }`;
+      allBtn.innerText = `All (${syllabus.length})`;
+      container.appendChild(allBtn);
+
+      distinctSubs.forEach(sub => {
+        const count = syllabus.filter(c => c.subject === sub).length;
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.onclick = () => filterBaselineBySubject(sub);
+        btn.className = `spring-press px-2.5 py-1 rounded-xl font-bold text-[11px] whitespace-nowrap transition-all ${
+          currentActive === sub ? 'bg-cyan-500/25 border border-cyan-400 text-cyan-200 shadow-[0_0_10px_rgba(6,182,212,0.2)]' : 'bg-white/5 border border-white/10 text-zinc-400 hover:text-white'
+        }`;
+        btn.innerText = `${sub} (${count})`;
+        container.appendChild(btn);
+      });
+    }
+
+    function filterBaselineBySubject(sub) {
+      playTactileFeedback('click');
+      onboardingState.activeBaselineSubjectTab = sub;
+      renderBaselineSubjectTabs();
+      renderBaselineChapterList();
+    }
+
+    function onBaselineSearchChange(val) {
+      onboardingState.baselineSearchQuery = (val || '').toLowerCase().trim();
+      renderBaselineChapterList();
+    }
+
+    function renderBaselineChapterList() {
+      const container = document.getElementById('baselineChapterListContainer');
+      if (!container) return;
+      container.innerHTML = '';
+
+      const targetSub = onboardingState.activeBaselineSubjectTab || 'ALL';
+      const q = onboardingState.baselineSearchQuery || '';
+      const list = onboardingState.stagedSyllabus || [];
+
+      const filtered = list.filter(ch => {
+        const matchSub = (targetSub === 'ALL' || ch.subject === targetSub);
+        const matchSearch = (!q || ch.name.toLowerCase().includes(q) || ch.subject.toLowerCase().includes(q));
+        return matchSub && matchSearch;
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<div class="text-xs text-zinc-500 italic py-8 text-center">No units matched criteria.</div>`;
+        return;
+      }
+
+      filtered.forEach((ch, idx) => {
+        const item = document.createElement('div');
+        
+        let cardBorder = 'border-white/10 bg-white/[0.03]';
+        let pillClasses = 'bg-white/5 text-zinc-400 border-white/10 hover:border-white/25';
+        let pillText = '⚪ Not Started (0%)';
+
+        if (ch.status === 'completed') {
+          cardBorder = 'border-emerald-500/40 bg-emerald-950/20';
+          pillClasses = 'bg-emerald-500/25 text-emerald-300 border-emerald-400/60 shadow-[0_0_12px_rgba(16,185,129,0.25)]';
+          pillText = '🟢 Completed (100%)';
+        } else if (ch.status === 'in-progress') {
+          cardBorder = 'border-amber-500/40 bg-amber-950/20';
+          pillClasses = 'bg-amber-500/20 text-amber-300 border-amber-400/50 shadow-[0_0_10px_rgba(245,158,11,0.2)]';
+          pillText = '🟡 In Progress (50%)';
+        }
+
+        item.className = `p-2.5 rounded-2xl border ${cardBorder} flex items-center justify-between gap-2 transition-all`;
+        item.innerHTML = `
+          <div class="flex items-center gap-2 min-w-0 flex-1">
+            <span class="tabular-nums text-[10px] font-mono font-bold text-zinc-500 w-5 shrink-0 text-right">${idx + 1}.</span>
+            <div class="min-w-0 flex-1">
+              <div class="text-xs sm:text-sm font-bold text-white truncate">${ch.name}</div>
+              <div class="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                <span class="text-[9px] text-zinc-400 font-mono">${ch.subject}</span>
+                ${ch.classLevel ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-white/10 text-zinc-300 font-medium">Class ${ch.classLevel}</span>` : ''}
+                ${ch.tier ? `<span class="text-[9px] px-1.5 py-0.2 rounded font-bold ${ch.tier === 'A' ? 'bg-rose-500/20 text-rose-300' : (ch.tier === 'B' ? 'bg-amber-500/20 text-amber-300' : 'bg-zinc-800 text-zinc-400')}">Tier-${ch.tier}</span>` : ''}
+              </div>
+            </div>
+          </div>
+          <button type="button" onclick="cycleBaselineChapterState('${ch.id}')" 
+                  title="Click to cycle: ⚪ 0% ➔ 🟡 50% ➔ 🟢 100%"
+                  class="spring-press px-2.5 py-1 rounded-full text-[10px] font-bold border shrink-0 transition-all ${pillClasses}">
+            ${pillText}
+          </button>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    function cycleBaselineChapterState(chId) {
+      playTactileFeedback('click');
+      const ch = (onboardingState.stagedSyllabus || []).find(c => c.id === chId);
+      if (ch) {
+        if (ch.status === 'unstarted') ch.status = 'in-progress';
+        else if (ch.status === 'in-progress') ch.status = 'completed';
+        else ch.status = 'unstarted';
+
+        renderBaselineChapterList();
+        updateBaselineLiveBanner();
+      }
+    }
+
+    function bulkMarkClass11Completed() {
+      playTactileFeedback('chime');
+      const syllabus = onboardingState.stagedSyllabus || [];
+      let markedCount = 0;
+
+      syllabus.forEach((ch, idx) => {
+        if (ch.classLevel === 11) {
+          ch.status = 'completed';
+          markedCount++;
+        } else if (!ch.classLevel && idx < Math.floor(syllabus.length / 2)) {
+          // If college or no explicit classLevel, mark first half as completed
+          ch.status = 'completed';
+          markedCount++;
+        }
+      });
+
+      renderBaselineChapterList();
+      updateBaselineLiveBanner();
+      alert(`✅ Bulk Updated: Marked ${markedCount} foundational / Class 11 chapters as Completed (100%).`);
+    }
+
+    function bulkResetAllUnstarted() {
+      playTactileFeedback('click');
+      const syllabus = onboardingState.stagedSyllabus || [];
+      syllabus.forEach(ch => ch.status = 'unstarted');
+      renderBaselineChapterList();
+      updateBaselineLiveBanner();
+    }
+
+    function updateBaselineLiveBanner() {
+      const bannerTextEl = document.getElementById('baselineLiveBannerText');
+      const velocityTextEl = document.getElementById('baselineLiveVelocityText');
+      const progressBarEl = document.getElementById('baselineLiveProgressBar');
+      const statCompEl = document.getElementById('baselineLiveStatsCompleted');
+      const statInProgEl = document.getElementById('baselineLiveStatsInProgress');
+      const statUnstartEl = document.getElementById('baselineLiveStatsUnstarted');
+
+      const syllabus = onboardingState.stagedSyllabus || [];
+      const total = syllabus.length;
+      let completed = 0;
+      let inProgress = 0;
+
+      syllabus.forEach(c => {
+        if (c.status === 'completed') completed++;
+        else if (c.status === 'in-progress') inProgress++;
+      });
+
+      const unstarted = total - (completed + inProgress);
+      const progressWeight = completed + (inProgress * 0.5);
+      const pctDone = total > 0 ? Math.round((progressWeight / total) * 100) : 0;
+      const remainingWorkload = Math.max(0, total - progressWeight);
+
+      const deadline = onboardingState.stagedDeadlineMs || (Date.now() + 120 * 86400000);
+      const daysLeft = Math.max(1, Math.ceil((deadline - Date.now()) / 86400000));
+      const dailyVelocity = daysLeft > 0 ? (remainingWorkload / daysLeft) : 0;
+      const daysPerUnit = remainingWorkload > 0 ? (daysLeft / remainingWorkload) : 999;
+
+      if (bannerTextEl) {
+        bannerTextEl.innerText = `Baseline: ${pctDone}% done | ${remainingWorkload.toFixed(1).replace(/\.0$/, '')} chapters left`;
+      }
+      if (progressBarEl) {
+        progressBarEl.style.width = `${pctDone}%`;
+      }
+      if (velocityTextEl) {
+        velocityTextEl.innerText = `Velocity: ${dailyVelocity.toFixed(2)} ch/day (1 every ${daysPerUnit.toFixed(1)}d)`;
+      }
+      if (statCompEl) statCompEl.innerText = `🟢 ${completed} Mastered`;
+      if (statInProgEl) statInProgEl.innerText = `🟡 ${inProgress} In-Progress`;
+      if (statUnstartEl) statUnstartEl.innerText = `⚪ ${unstarted} Not Started`;
+    }
+
+    function confirmBaselineAndLaunch() {
+      playTactileFeedback('chime');
+
+      const goalTitle = onboardingState.stagedGoalTitle || onboardingState.selectedGoal;
+      const isNeet = /neet/i.test(goalTitle);
+      const isJee = /jee/i.test(goalTitle);
+      const isCollege = onboardingState.stagedCategory === 'college';
+
+      const deadlineMs = onboardingState.stagedDeadlineMs || onboardingState.syllabusDeadlineDate || (Date.now() + 120 * 86400000);
+      const subjects = onboardingState.stagedSubjects || (isNeet ? ['Physics', 'Chemistry', 'Botany', 'Zoology'] : ['Physics', 'Chemistry', 'Mathematics']);
+      const electives = onboardingState.selectedElectives || [];
+
       appState.profile = {
-        category: 'competitive',
+        category: onboardingState.stagedCategory || 'competitive',
         goalTitle: goalTitle,
-        goalType: goalType,
-        discipline: '',
-        degree: '',
-        yearOrSem: '',
-        targetGoal: isNeet ? '700+ Score in NEET UG' : '99.5+ Percentile in JEE',
-        examDate: isNeet ? getUpcomingNeetTargetDate().toISOString() : (isJee ? new Date(2027, 0, 24).toISOString() : new Date(onboardingState.syllabusDeadlineDate || Date.now() + 120 * 86400000).toISOString()),
-        syllabusDeadline: onboardingState.syllabusDeadlineDate || (Date.now() + 120 * 86400000),
-        subjects: subjects
+        goalType: onboardingState.stagedGoalType || (isNeet ? 'NEET' : (isJee ? 'JEE' : (isCollege ? 'COLLEGE' : 'OTHER'))),
+        discipline: onboardingState.selectedDiscipline || '',
+        degree: onboardingState.selectedDegree || '',
+        yearOrSem: `${onboardingState.selectedYear || 'Year 1'} / ${onboardingState.selectedSem || 'Sem 1'}`,
+        targetGoal: onboardingState.stagedTargetGoal || (isNeet ? '700+ Score in NEET UG' : '99.5+ Percentile in JEE'),
+        examDate: onboardingState.stagedExamDate || new Date(deadlineMs).toISOString(),
+        syllabusDeadline: deadlineMs,
+        subjects: subjects,
+        electives: electives
       };
 
-      appState.targetYear = 2027;
-      appState.syllabusDeadline = appState.profile.syllabusDeadline;
-      appState.syllabus = syllabus;
-      appState.dreamCollege = chosenCollege || (isNeet ? 'AIIMS New Delhi' : (isJee ? 'IIT Bombay' : 'Dream Goal'));
+      appState.targetYear = new Date(appState.profile.examDate).getFullYear();
+      appState.syllabusDeadline = deadlineMs;
+      appState.syllabus = onboardingState.stagedSyllabus || buildInitial79Chapters();
+      appState.dreamCollege = onboardingState.stagedDreamCollege || (isNeet ? 'AIIMS New Delhi' : (isJee ? 'IIT Bombay' : 'Dream Goal'));
       appState.dreamCollegeLockedUntil = 0;
 
-      // Initialize daily routines with subjects
+      // Routine setup
       appState.dailyRoutines = {
         0: [subjects[0]],
         1: [subjects[1] || subjects[0]],
@@ -2383,12 +3494,27 @@
         6: [...subjects]
       };
 
+      // Recalculate D0-D6 Schedule & Pacing
+      generateDynamicSyllabusSchedule(false);
+      updateDynamicPacingTelemetry();
+      updateDualCountdowns();
+      updateGoalPillUI();
+
       saveState();
       closeOnboardingModal();
       renderAll();
-      alert(`✨ Cockpit Calibrated for ${goalTitle}!\nCountdown, syllabus, and dynamic daily matrix active.`);
+
+      const { percent, remainingWorkload } = calculateRemainingWorkload(appState.syllabus);
+      alert(`✨ Baseline Calibrated & Cockpit Launched!\n\n• Baseline Mastery: ${percent}%\n• Remaining Workload: ${remainingWorkload.toFixed(1)} chapters\n• D0–D6 Planner Queued: In-Progress chapters first, unstarted in sequence, Sunday revisions!`);
     }
 
+    function saveAdjustedGoalAndBaseline() {
+      confirmBaselineAndLaunch();
+    }
+
+    /* =========================================================================
+       COLLEGE DEGREE HELPERS
+       ========================================================================= */
     function renderCollegeDegreesList() {
       Object.keys(COLLEGE_DISCIPLINES).forEach(disc => {
         let containerId = 'degGroupMedical';
@@ -2405,9 +3531,9 @@
           const btn = document.createElement('button');
           btn.type = 'button';
           btn.onclick = () => selectCollegeDegree(deg, disc);
-          btn.className = `spring-press py-2 px-2 rounded-xl text-xs font-bold text-center border transition-all ${
+          btn.className = `spring-press p-2 rounded-xl text-left border text-xs font-bold transition-all truncate ${
             isSelected 
-              ? 'bg-purple-500/25 border-purple-400 text-white shadow-[0_0_14px_rgba(168,85,247,0.3)]' 
+              ? 'bg-purple-500/25 border-purple-400 text-white shadow-[0_0_12px_rgba(168,85,247,0.3)]' 
               : 'bg-white/5 border-white/10 text-zinc-300 hover:text-white hover:border-white/20'
           }`;
           btn.innerText = deg;
@@ -2430,9 +3556,9 @@
 
       const targetInput = document.getElementById('onboardingTargetGoalInput');
       if (targetInput) {
-        if (degree === 'MBBS' || degree === 'BDS') targetInput.value = 'Pass Finals with Distinction';
-        else if (degree.includes('B.Tech') || degree.includes('MCA')) targetInput.value = '8.5+ CGPA';
-        else if (degree === 'CA') targetInput.value = 'Pass Both Groups (AIR Top 50)';
+        if (degree.includes('MBBS') || degree.includes('BDS')) targetInput.value = 'Pass Finals with Distinction';
+        else if (degree.includes('B.Tech') || degree.includes('BCA') || degree.includes('MCA')) targetInput.value = '8.5+ CGPA';
+        else if (degree.includes('CA')) targetInput.value = 'Pass Both Groups (AIR Top 50)';
         else targetInput.value = '8.5+ CGPA';
       }
 
@@ -2496,77 +3622,20 @@
     }
 
     function renderParsedCoursesChips(val) {
-      const container = document.getElementById('onboardingParsedCoursesChips');
+      const container = document.getElementById('parsedCoursesChipsContainer');
       if (!container) return;
       container.innerHTML = '';
-      const parsed = val.split(/[,;\n]/).map(s => s.trim()).filter(Boolean);
-      if (parsed.length === 0) {
-        container.innerHTML = `<span class="text-[11px] text-zinc-500 italic">No courses entered yet</span>`;
-        return;
-      }
-      parsed.forEach(c => {
+      if (!val) return;
+
+      const courses = val.split(/[,;\n]/).map(s => s.trim()).filter(Boolean);
+      courses.forEach(c => {
         const chip = document.createElement('span');
-        chip.className = 'px-2 py-0.5 rounded-md bg-purple-500/20 text-purple-300 border border-purple-500/30 text-[10px] font-bold';
-        chip.innerText = `📚 ${c} (4 Units)`;
+        chip.className = 'px-2 py-0.5 rounded-lg bg-purple-500/20 text-purple-200 border border-purple-400/40 text-[10px] font-bold';
+        chip.innerText = c;
         container.appendChild(chip);
       });
     }
 
-    function submitCollegeOnboarding() {
-      playTactileFeedback('chime');
-      const degree = onboardingState.selectedDegree;
-      const yearSem = `${onboardingState.selectedYear} / ${onboardingState.selectedSem}`;
-      const rawCourses = document.getElementById('onboardingCollegeCoursesInput')?.value || onboardingState.collegeCourses;
-      const parsedCourses = rawCourses.split(/[,;\n]/).map(s => s.trim()).filter(Boolean);
-
-      if (parsedCourses.length === 0) {
-        alert('Please enter at least one active subject / course.');
-        return;
-      }
-
-      const targetGoal = document.getElementById('onboardingTargetGoalInput')?.value.trim() || '8.5+ CGPA';
-      const examDateVal = document.getElementById('onboardingCollegeExamDate')?.value;
-      const examDate = examDateVal ? new Date(examDateVal + 'T23:59:59').toISOString() : new Date(Date.now() + 90 * 86400000).toISOString();
-      const deadlineMs = examDateVal ? new Date(examDateVal + 'T23:59:59').getTime() : (Date.now() + 90 * 86400000);
-
-      // Modular Syllabus: dynamic custom unit builder for entered courses
-      const modularUnits = buildInitialModularUnits(parsedCourses);
-
-      appState.profile = {
-        category: 'college',
-        goalTitle: `${degree} (${onboardingState.selectedYear})`,
-        goalType: 'COLLEGE',
-        discipline: onboardingState.selectedDiscipline,
-        degree: degree,
-        yearOrSem: yearSem,
-        targetGoal: targetGoal,
-        examDate: examDate,
-        syllabusDeadline: deadlineMs,
-        subjects: parsedCourses
-      };
-
-      appState.targetYear = new Date(examDate).getFullYear();
-      appState.syllabusDeadline = deadlineMs;
-      appState.syllabus = modularUnits;
-      appState.dreamCollege = `${degree} (${targetGoal})`;
-      appState.dreamCollegeLockedUntil = 0;
-
-      // Initialize daily workload matrix routines with college course tags
-      appState.dailyRoutines = {
-        0: [parsedCourses[0]],
-        1: [parsedCourses[1] || parsedCourses[0]],
-        2: [parsedCourses[2] || parsedCourses[0]],
-        3: [parsedCourses[0]],
-        4: parsedCourses.slice(0, 2),
-        5: parsedCourses.slice(1, 3),
-        6: [...parsedCourses]
-      };
-
-      saveState();
-      closeOnboardingModal();
-      renderAll();
-      alert(`🎓 Modular Syllabus Created for ${degree}!\n${modularUnits.length} course units generated across ${parsedCourses.length} subjects.`);
-    }
 
     /* =========================================================================
        4. TOP BANNER GOAL PILL & TARGET ANCHOR
@@ -2824,27 +3893,44 @@
       updateDynamicPacingTelemetry(daysLeft);
     }
 
+        /* =========================================================================
+       DYNAMIC PACING CALCULATION & WORKLOAD ENGINE
+       ========================================================================= */
+    function calculateRemainingWorkload(syllabus) {
+      const list = syllabus || (appState && appState.syllabus) || [];
+      const total = list.length;
+      let completed = 0;
+      let inProgress = 0;
+
+      list.forEach(c => {
+        if (c.status === 'completed') completed++;
+        else if (c.status === 'in-progress') inProgress++;
+      });
+
+      const progressWeight = completed + (inProgress * 0.5);
+      const remainingWorkload = Math.max(0, total - progressWeight);
+      const percent = total > 0 ? Math.round((progressWeight / total) * 100) : 0;
+
+      return {
+        total,
+        completed,
+        inProgress,
+        unstarted: total - (completed + inProgress),
+        progressWeight,
+        remainingWorkload,
+        percent
+      };
+    }
+
     function updateDynamicPacingTelemetry(daysLeft) {
       if (!daysLeft) {
         const deadline = appState.syllabusDeadline || (Date.now() + 120 * 86400000);
         daysLeft = Math.max(1, Math.ceil((deadline - Date.now()) / 86400000));
       }
 
-      const totalSyllabus = (appState.syllabus && appState.syllabus.length > 0) ? appState.syllabus.length : 79;
-      let completedCount = 0;
-      let inProgressCount = 0;
-
-      if (appState.syllabus) {
-        appState.syllabus.forEach(s => {
-          if (s.status === 'completed') completedCount++;
-          else if (s.status === 'in-progress') inProgressCount++;
-        });
-      }
-
-      const effectiveDone = completedCount + (0.5 * inProgressCount);
-      const remainingWorkload = Math.max(0, totalSyllabus - effectiveDone);
+      const { total, completed, inProgress, unstarted, remainingWorkload, percent } = calculateRemainingWorkload(appState.syllabus);
+      const dailyVelocity = daysLeft > 0 ? (remainingWorkload / daysLeft) : 0;
       const daysPerUnit = remainingWorkload > 0 ? (daysLeft / remainingWorkload) : 999;
-      const rateUnitsPerDay = daysLeft > 0 ? (remainingWorkload / daysLeft) : 0;
 
       const bannerTextEl = document.getElementById('dynamicPacingTelemetryText');
       const breakdownPillEl = document.getElementById('pacingBreakdownPill');
@@ -2852,12 +3938,12 @@
 
       if (bannerTextEl) {
         if (remainingWorkload <= 0) {
-          bannerTextEl.innerHTML = `<span class="text-emerald-400 font-black">🎉 ${totalSyllabus}/${totalSyllabus} COMPLETE!</span> <span class="text-zinc-300">All ${unitTerm === 'units' ? 'Course Units' : 'Chapters'} Mastered. Full Revision Mode Active!</span>`;
+          bannerTextEl.innerHTML = `<span class="text-emerald-400 font-black">🎉 ${total}/${total} MASTERED (100%)!</span> <span class="text-zinc-300">All ${unitTerm === 'units' ? 'Course Units' : 'Chapters'} Mastered. Sunday Revision Active!</span>`;
         } else {
           bannerTextEl.innerHTML = `
-            <span>🎯 <strong class="text-cyan-300 tabular-nums">${remainingWorkload.toFixed(1)}/${totalSyllabus} Left</strong></span>
+            <span>🎯 <strong class="text-cyan-300 tabular-nums">${remainingWorkload.toFixed(1)}/${total} Left</strong></span>
             <span class="text-zinc-400 mx-1.5">•</span>
-            <span>1 ${unitTerm === 'units' ? 'unit' : 'ch'} every <strong class="text-amber-300 tabular-nums">${daysPerUnit.toFixed(1)}d</strong></span>
+            <span>Velocity: <strong class="text-emerald-300 tabular-nums">${dailyVelocity.toFixed(2)} ${unitTerm}/day</strong> (1 every <strong class="text-amber-300 tabular-nums">${daysPerUnit.toFixed(1)}d</strong>)</span>
             <span class="text-zinc-400 mx-1.5">•</span>
             <span><strong class="text-white tabular-nums">${daysLeft}d</strong> to Target</span>
           `;
@@ -2865,7 +3951,7 @@
       }
 
       if (breakdownPillEl) {
-        breakdownPillEl.innerText = `${completedCount} Mastered • ${inProgressCount} In-Progress • ${remainingWorkload.toFixed(1)} Left`;
+        breakdownPillEl.innerText = `${completed} Mastered • ${inProgress} In-Progress • ${remainingWorkload.toFixed(1)} Left`;
       }
 
       // Update Syllabus tab telemetry cards
@@ -2875,18 +3961,144 @@
       const inProgTextEl = document.getElementById('syllabusInProgressCountText');
       const unstartTextEl = document.getElementById('syllabusUnstartedCountText');
 
-      const pctMastered = Math.round((completedCount / totalSyllabus) * 100);
-      if (masteryRatioEl) masteryRatioEl.innerText = `${completedCount}/${totalSyllabus} (${pctMastered}%)`;
-      if (masteryBarEl) masteryBarEl.style.width = `${pctMastered}%`;
-      if (doneTextEl) doneTextEl.innerText = completedCount;
-      if (inProgTextEl) inProgTextEl.innerText = inProgressCount;
-      if (unstartTextEl) unstartTextEl.innerText = totalSyllabus - (completedCount + inProgressCount);
+      if (masteryRatioEl) masteryRatioEl.innerText = `${completed}/${total} (${percent}%)`;
+      if (masteryBarEl) masteryBarEl.style.width = `${percent}%`;
+      if (doneTextEl) doneTextEl.innerText = completed;
+      if (inProgTextEl) inProgTextEl.innerText = inProgress;
+      if (unstartTextEl) unstartTextEl.innerText = unstarted;
 
       const prevDays = document.getElementById('previewDaysRemaining');
       const prevPacing = document.getElementById('previewPacingRate');
       if (prevDays) prevDays.innerText = `${daysLeft} days remaining`;
-      if (prevPacing) prevPacing.innerText = `1 ${unitTerm === 'units' ? 'unit' : 'ch'} every ${daysPerUnit.toFixed(1)} days (${rateUnitsPerDay.toFixed(2)} / day)`;
+      if (prevPacing) prevPacing.innerText = `Velocity: ${dailyVelocity.toFixed(2)} / day • 1 ${unitTerm === 'units' ? 'unit' : 'ch'} every ${daysPerUnit.toFixed(1)} days`;
     }
+
+    /* =========================================================================
+       DYNAMIC D0–D6 SCHEDULE PLANNER ENGINE
+       ========================================================================= */
+    function generateDynamicSyllabusSchedule(preserveManual = true) {
+      if (!appState.syllabus || appState.syllabus.length === 0) return;
+
+      const subjects = getProfileSubjects();
+      
+      const inProgressChapters = appState.syllabus.filter(c => c.status === 'in-progress');
+      const unstartedChapters = appState.syllabus.filter(c => c.status === 'unstarted');
+      const completedChapters = appState.syllabus.filter(c => c.status === 'completed');
+
+      const queuedChapterIds = new Set();
+      let preservedTasks = [];
+
+      if (preserveManual && appState.tasks && appState.tasks.length > 0) {
+        preservedTasks = appState.tasks.filter(t => t.completed || t.isManual);
+        preservedTasks.forEach(t => {
+          if (t.sourceChapterId) queuedChapterIds.add(t.sourceChapterId);
+        });
+      }
+
+      const newWeeklyTasks = [...preservedTasks];
+
+      function getNextSubjectChapter(sub) {
+        // 1. In-Progress queued FIRST as urgent next tasks
+        const inProg = inProgressChapters.find(c => c.subject.toLowerCase() === sub.toLowerCase() && !queuedChapterIds.has(c.id));
+        if (inProg) {
+          queuedChapterIds.add(inProg.id);
+          return { chapter: inProg, isUrgent: true };
+        }
+        // 2. Unstarted queued next in logical sequence
+        const unstarted = unstartedChapters.find(c => c.subject.toLowerCase() === sub.toLowerCase() && !queuedChapterIds.has(c.id));
+        if (unstarted) {
+          queuedChapterIds.add(unstarted.id);
+          return { chapter: unstarted, isUrgent: false };
+        }
+        return null;
+      }
+
+      let completedRevIdx = 0;
+
+      for (let dayOffset = 0; dayOffset <= 6; dayOffset++) {
+        const targetDate = new Date();
+        targetDate.setDate(targetDate.getDate() + dayOffset);
+        const isSunday = (targetDate.getDay() === 0);
+
+        let currentDayMinutes = newWeeklyTasks
+          .filter(t => t.dayOffset === dayOffset)
+          .reduce((sum, t) => sum + t.durationMinutes, 0);
+
+        if (isSunday) {
+          // 'Completed' chapters are scheduled ONLY into periodic Sunday revision slots
+          let revSlots = 0;
+          while (revSlots < 3 && currentDayMinutes + 60 <= DAILY_CAP_MINUTES) {
+            if (completedChapters.length > 0) {
+              const revCh = completedChapters[completedRevIdx % completedChapters.length];
+              completedRevIdx++;
+              newWeeklyTasks.push({
+                id: 't_rev_' + dayOffset + '_' + revSlots + '_' + Date.now(),
+                sourceChapterId: revCh.id,
+                title: `🔄 Sunday Revision: ${revCh.name} (Active Recall & PYQs)`,
+                subject: revCh.subject,
+                type: 'PRACTICE',
+                durationMinutes: 60,
+                dayOffset: dayOffset,
+                completed: false,
+                createdAt: Date.now()
+              });
+              currentDayMinutes += 60;
+              revSlots++;
+            } else {
+              newWeeklyTasks.push({
+                id: 't_rev_' + dayOffset + '_' + revSlots + '_' + Date.now(),
+                title: `🔄 Sunday Review: Active Recall & Mock Accuracy Drill`,
+                subject: subjects[0] || 'Physics',
+                type: 'PRACTICE',
+                durationMinutes: 75,
+                dayOffset: dayOffset,
+                completed: false,
+                createdAt: Date.now()
+              });
+              currentDayMinutes += 75;
+              break;
+            }
+          }
+        } else {
+          // Weekdays: Queues In-Progress first, then Unstarted
+          const daySubjects = getSelectedDaySubjects(dayOffset);
+          daySubjects.forEach(sub => {
+            if (currentDayMinutes + 75 > DAILY_CAP_MINUTES) return;
+
+            const nextItem = getNextSubjectChapter(sub);
+            if (nextItem) {
+              const { chapter, isUrgent } = nextItem;
+              newWeeklyTasks.push({
+                id: 't_dyn_' + dayOffset + '_' + chapter.id + '_' + Date.now(),
+                sourceChapterId: chapter.id,
+                title: isUrgent 
+                  ? `⚡ Urgent Completion: ${chapter.name} (Core Concepts & Practice)`
+                  : `📖 Syllabus Milestone: ${chapter.name} (Lecture & Drills)`,
+                subject: chapter.subject,
+                type: isUrgent ? 'PRACTICE' : 'LECTURE',
+                durationMinutes: isUrgent ? 75 : 60,
+                dayOffset: dayOffset,
+                completed: false,
+                createdAt: Date.now()
+              });
+              currentDayMinutes += (isUrgent ? 75 : 60);
+            }
+          });
+        }
+      }
+
+      appState.tasks = newWeeklyTasks;
+      saveState();
+      renderWorkloadMatrix();
+      renderRatioEnforcement();
+    }
+
+    function triggerDynamicAutoQueue() {
+      playTactileFeedback('chime');
+      generateDynamicSyllabusSchedule(true);
+      alert('⚡ Dynamic Schedule Recalculated!\n• In-Progress chapters prioritized as urgent tasks\n• Unstarted queued in logical order\n• Sunday revision slots reserved for completed units.');
+    }
+
 
     function openSyllabusDeadlineModal() {
       playTactileFeedback('click');
@@ -3880,7 +5092,7 @@
       renderSyllabusDatabase();
     }
 
-    function cycleChapterState(chId) {
+        function cycleChapterState(chId) {
       playTactileFeedback('click');
       const ch = appState.syllabus.find(c => c.id === chId);
       if (ch) {
@@ -3891,6 +5103,8 @@
         saveState();
         renderSyllabusDatabase();
         updateDualCountdowns();
+        updateDynamicPacingTelemetry();
+        generateDynamicSyllabusSchedule(true);
       }
     }
 
@@ -3923,7 +5137,9 @@
       saveState();
       renderSyllabusDatabase();
       updateDualCountdowns();
-      alert('⚡ Auto-Triage complete! All 79 NEET chapters categorized.');
+      updateDynamicPacingTelemetry();
+      generateDynamicSyllabusSchedule(true);
+      alert('⚡ Auto-Triage complete! All 79 NEET chapters categorized with verified Tier weightings.');
     }
 
     function renderSyllabusDatabase() {
@@ -3938,7 +5154,7 @@
       const filtered = (appState.syllabus || []).filter(ch => {
         const matchSub = (targetSub === 'ALL' || ch.subject.toLowerCase() === targetSub.toLowerCase());
         const matchTier = (targetTier === 'ALL' || ch.tier === targetTier);
-        const matchSearch = (!syllabusSearchQuery || ch.name.toLowerCase().includes(syllabusSearchQuery));
+        const matchSearch = (!syllabusSearchQuery || ch.name.toLowerCase().includes(syllabusSearchQuery) || ch.subject.toLowerCase().includes(syllabusSearchQuery));
         return matchSub && matchTier && matchSearch;
       });
 
@@ -3952,33 +5168,41 @@
 
       filtered.forEach((ch, idx) => {
         const card = document.createElement('div');
-        card.className = "liquid-panel-subtle p-3 rounded-2xl border border-white/10 flex flex-wrap items-center justify-between gap-2 hover:border-cyan-400/30 transition-colors";
-
+        
         let tierBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">Tier-C</span>';
         if (ch.tier === 'A') tierBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40">Tier-A Core</span>';
         else if (ch.tier === 'B') tierBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40">Tier-B One-Shot</span>';
 
-        let statusBtn = '⚪ Unstarted (0.0)';
-        let statusStyle = 'text-zinc-400 border-white/10 bg-white/5';
+        let statusBtn = '⚪ Not Started (0%)';
+        let statusStyle = 'text-zinc-400 border-white/10 bg-white/5 hover:border-white/20';
+        let cardStyle = 'border-white/10 bg-white/[0.02] hover:border-cyan-400/30';
+
         if (ch.status === 'completed') {
-          statusBtn = '✅ Mastered (1.0)';
-          statusStyle = 'text-emerald-300 border-emerald-500/40 bg-emerald-500/20 font-bold';
+          statusBtn = '🟢 Completed (100%)';
+          statusStyle = 'text-emerald-300 border-emerald-400/60 bg-emerald-500/25 font-bold shadow-[0_0_12px_rgba(16,185,129,0.25)]';
+          cardStyle = 'border-emerald-500/40 bg-emerald-950/20 shadow-[0_0_20px_rgba(16,185,129,0.12)]';
         } else if (ch.status === 'in-progress') {
-          statusBtn = '🟡 In-Progress (0.5)';
-          statusStyle = 'text-amber-300 border-amber-500/40 bg-amber-500/20 font-bold';
+          statusBtn = '🟡 In Progress (50%)';
+          statusStyle = 'text-amber-300 border-amber-400/50 bg-amber-500/20 font-bold shadow-[0_0_10px_rgba(245,158,11,0.2)]';
+          cardStyle = 'border-amber-500/40 bg-amber-950/20 shadow-[0_0_15px_rgba(245,158,11,0.1)]';
         }
 
+        card.className = `p-3 rounded-2xl border ${cardStyle} flex flex-wrap items-center justify-between gap-2 transition-all`;
 
         card.innerHTML = `
           <div class="flex items-center gap-2.5 flex-1 min-w-[210px]">
             <span class="tabular-nums text-[10px] font-mono font-bold text-zinc-500 w-5 text-right">${idx + 1}.</span>
             <div class="min-w-0 flex-1">
-              <div class="text-xs sm:text-sm font-bold text-white truncate">${ch.name}</div>
+              <div class="text-xs sm:text-sm font-bold text-white truncate flex items-center gap-1.5">
+                ${ch.status === 'completed' ? '<span class="text-emerald-400 text-xs">✓</span>' : ''}
+                <span class="${ch.status === 'completed' ? 'text-emerald-100' : ''}">${ch.name}</span>
+              </div>
               <div class="flex items-center gap-2 mt-1 flex-wrap">
                 <span class="text-[10px] text-zinc-400 font-mono">${ch.subject}</span>
+                ${ch.classLevel ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-white/10 text-zinc-300 font-medium">Class ${ch.classLevel}</span>` : ''}
                 ${tierBadge}
-                <button onclick="cycleChapterState('${ch.id}')" title="Click to cycle: Unstarted ➔ In-Progress ➔ Mastered" 
-                        class="spring-press px-2 py-0.5 rounded-full text-[10px] border ${statusStyle}">
+                <button onclick="cycleChapterState('${ch.id}')" title="Click to cycle: ⚪ 0% ➔ 🟡 50% ➔ 🟢 100%" 
+                        class="spring-press px-2.5 py-0.5 rounded-full text-[10px] font-bold border transition-all ${statusStyle}">
                   ${statusBtn}
                 </button>
               </div>
@@ -3986,7 +5210,7 @@
           </div>
 
           <div class="flex items-center gap-1.5 shrink-0">
-            <button onclick="scheduleChapterDirectly('${ch.id}')" 
+            <button onclick="scheduleChapterDirectly('${ch.name}', '${ch.subject}')" 
                     title="Schedule 45m practice task in Today's matrix" 
                     class="spring-press px-2.5 py-1 rounded-xl bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/30 border border-cyan-400/40 text-[10px] font-bold">
               + Add to Today
@@ -3997,15 +5221,6 @@
       });
     }
 
-    function scheduleCurrentTierOneShot() {
-      playTactileFeedback('chime');
-      const unstarted = (appState.syllabus || []).find(s => s.status !== 'completed');
-      if (unstarted) {
-        scheduleChapterDirectly(unstarted.name, unstarted.subject);
-      } else {
-        alert('All chapters / units are mastered! 🎉');
-      }
-    }
 
     /* =========================================================================
        12. 3-BUCKET ERROR LOGGER ENGINE
