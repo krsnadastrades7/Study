@@ -1,12 +1,12 @@
 {
-  "name": "SYSTEM",
-  "short_name": "SYSTEM",
-  "start_url": "./index.html",
+  "name": "STUDY // Liquid Glass Cockpit",
+  "short_name": "STUDY",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "display_override": ["standalone", "window-controls-overlay"],
-  "background_color": "#050811",
-  "theme_color": "#050811",
+  "background_color": "#000000",
+  "theme_color": "#000000",
   "orientation": "portrait-primary",
   "icons": [
     {
