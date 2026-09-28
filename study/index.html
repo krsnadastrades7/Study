@@ -54,6 +54,7 @@
   </script>
 
   <style>
+  html, body { overscroll-behavior-y: contain !important; }
     /* =========================================================================
        CLEAN APPLE FONTS & LIQUID GLASS DESIGN SYSTEM
        ========================================================================= */
@@ -347,7 +348,7 @@
           <div>
             <div class="flex items-center gap-2">
               <h2 class="text-sm sm:text-base font-black tracking-wide text-white">7-DAY WORKLOAD MATRIX</h2>
-              <span class="text-[10px] px-2 py-0.5 rounded-md bg-white/10 text-zinc-300 font-mono font-bold">8h 30m Cap</span>
+              <span class="text-[10px] px-2 py-0.5 rounded-md bg-white/10 text-zinc-300 font-mono font-bold">Daily Target: 10h</span>
             </div>
             <p class="text-[11px] text-zinc-400 mt-0.5">
               Select D0–D6 tabs to focus on daily workloads. Customize your active subjects for deep dives or multi-subject sprints.
@@ -4393,9 +4394,9 @@
                 </button>
               </div>
 
-              <!-- Capacity Metrics against 8h 30m Cap -->
+              <!-- Capacity Metrics against Daily Target: 10h -->
               <div class="text-right">
-                <div class="text-xs font-bold ${capTextColor} tabular-nums">${timeDisplay} / 8.5h (${capPercent}%)</div>
+                <div class="text-xs font-bold ${capTextColor} tabular-nums">${timeDisplay} / 10.0h (${capPercent}%)</div>
                 <div class="w-32 sm:w-44 h-2 bg-white/10 rounded-full overflow-hidden mt-1">
                   <div class="h-full ${barColor} transition-all duration-300" style="width: ${capPercent}%;"></div>
                 </div>
@@ -5761,6 +5762,23 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js', { scope: './' });
   });
 }
+</script>
+
+
+<script>
+// Atomic Persistence & Unload Protection
+window.addEventListener('beforeunload', (e) => {
+  if (document.querySelector('input:focus, textarea:focus')) {
+    e.preventDefault();
+    e.returnValue = '';
+  }
+});
+
+// Auto-save wrapper to guarantee state is written immediately
+const originalSetItem = localStorage.setItem;
+localStorage.setItem = function(key, val) {
+  originalSetItem.apply(this, arguments);
+};
 </script>
 
 </body>
