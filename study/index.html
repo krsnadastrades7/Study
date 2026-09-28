@@ -221,12 +221,12 @@
             <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
           </div>
 
-          <!-- Target College Pill (Custom Input / Locked Anchor) -->
-          <button id="dreamCollegePill" onclick="openDreamCollegeModal()" 
-                  class="spring-press flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold tracking-wide bg-gradient-to-r from-amber-500/20 via-yellow-500/20 to-orange-500/20 border border-amber-400/50 text-amber-300 shadow-[0_0_15px_rgba(245,158,11,0.2)] hover:border-amber-300 shrink-0">
-            <span id="dreamCollegeLockIcon">🏛</span>
-            <span id="dreamCollegeLabel" class="uppercase truncate max-w-[130px] sm:max-w-[180px]">TARGET: NOT SET</span>
-            <span id="dreamCollegeBadge" class="text-[9px] bg-emerald-400/30 text-emerald-200 px-1.5 py-0.2 rounded-full font-bold">UNLOCKED</span>
+          <!-- Goal Badge Pill (PW Reference: Tap opens Change Exam / Degree Goal modal anytime) -->
+          <button id="goalSelectorPill" onclick="openGoalSelectorModal()" title="Change Your Exam / Degree Goal"
+                  class="spring-press flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold tracking-wide bg-gradient-to-r from-amber-500/20 via-yellow-500/20 to-orange-500/20 border border-amber-400/50 text-amber-300 shadow-[0_0_15px_rgba(245,158,11,0.2)] hover:border-amber-300 shrink-0">
+            <span id="goalPillIcon">🎯</span>
+            <span id="goalPillLabel" class="uppercase truncate max-w-[130px] sm:max-w-[190px]">DROPPER - NEET</span>
+            <span id="goalPillBadge" class="text-[9px] bg-amber-400/30 text-amber-200 px-1.5 py-0.5 rounded-full font-bold">GOAL ▾</span>
           </button>
         </div>
 
@@ -350,7 +350,7 @@
               <span class="text-[10px] px-2 py-0.5 rounded-md bg-white/10 text-zinc-300 font-mono font-bold">8h 30m Cap</span>
             </div>
             <p class="text-[11px] text-zinc-400 mt-0.5">
-              Select D0–D6 tabs to view one day at a time. Alternates Track A (Physics + Zoology) and Track B (Chemistry + Botany).
+              Select D0–D6 tabs to focus on daily workloads. Customize your active subjects for deep dives or multi-subject sprints.
             </p>
           </div>
 
@@ -434,10 +434,10 @@
               <div>
                 <label class="text-[10px] text-zinc-400 uppercase font-bold tracking-wider mb-1 block">Subject</label>
                 <select id="timerSessionSubject" class="w-full bg-white/10 text-white border border-white/20 rounded-xl px-2.5 py-1.5 text-xs outline-none focus:border-cyan-400 font-semibold">
-                  <option value="Physics" class="bg-zinc-900">Physics (Track A)</option>
-                  <option value="Chemistry" class="bg-zinc-900">Chemistry (Track B)</option>
-                  <option value="Botany" class="bg-zinc-900">Botany (Track B)</option>
-                  <option value="Zoology" class="bg-zinc-900">Zoology (Track A)</option>
+                  <option value="Physics" class="bg-zinc-900">Physics</option>
+                  <option value="Chemistry" class="bg-zinc-900">Chemistry</option>
+                  <option value="Botany" class="bg-zinc-900">Botany</option>
+                  <option value="Zoology" class="bg-zinc-900">Zoology</option>
                 </select>
               </div>
             </div>
@@ -697,13 +697,9 @@
 
           <!-- Subject & Tier Filters Bar -->
           <div class="space-y-2 mb-3">
-            <!-- Subject Filters -->
-            <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar text-xs">
-              <button onclick="filterSyllabusBySubject('ALL')" id="filterSubALL" class="spring-press px-2.5 py-1 rounded-xl bg-white/20 text-white font-bold text-[11px] whitespace-nowrap">All (79)</button>
-              <button onclick="filterSyllabusBySubject('Physics')" id="filterSubPhysics" class="spring-press px-2.5 py-1 rounded-xl liquid-panel-subtle text-zinc-400 hover:text-white font-medium text-[11px] whitespace-nowrap">Physics (25)</button>
-              <button onclick="filterSyllabusBySubject('Chemistry')" id="filterSubChemistry" class="spring-press px-2.5 py-1 rounded-xl liquid-panel-subtle text-zinc-400 hover:text-white font-medium text-[11px] whitespace-nowrap">Chemistry (22)</button>
-              <button onclick="filterSyllabusBySubject('Botany')" id="filterSubBotany" class="spring-press px-2.5 py-1 rounded-xl liquid-panel-subtle text-zinc-400 hover:text-white font-medium text-[11px] whitespace-nowrap">Botany (17)</button>
-              <button onclick="filterSyllabusBySubject('Zoology')" id="filterSubZoology" class="spring-press px-2.5 py-1 rounded-xl liquid-panel-subtle text-zinc-400 hover:text-white font-medium text-[11px] whitespace-nowrap">Zoology (15)</button>
+            <!-- Subject Filters (Dynamic container) -->
+            <div id="syllabusSubjectFiltersContainer" class="flex items-center gap-1.5 overflow-x-auto no-scrollbar text-xs">
+              <button onclick="filterSyllabusBySubject('ALL')" id="filterSubALL" class="spring-press px-2.5 py-1 rounded-xl bg-white/20 text-white font-bold text-[11px] whitespace-nowrap">All</button>
             </div>
 
             <!-- Tier Filters & Search -->
@@ -841,42 +837,255 @@
   </nav>
 
   <!-- =======================================================================
-       1-TIME SETUP PROMPT MODAL (For New Users / Clean Blank Slate)
+       FULL CONVERSATIONAL MULTI-STEP ONBOARDING MODAL (#onboardingModal)
+       (PW / Apple Aesthetic: Category Cards, PW Goal Selector, Modular Syllabus)
        ======================================================================= -->
-  <div id="firstRunSetupModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop hidden">
-    <div class="liquid-panel-elevated rounded-3xl max-w-md w-full p-6 relative border border-cyan-400/40 shadow-[0_0_80px_rgba(6,182,212,0.3)]">
-      <div class="text-center mb-5">
-        <div class="w-14 h-14 rounded-2xl bg-cyan-500/20 border border-cyan-400/50 flex items-center justify-center text-cyan-300 text-2xl font-bold mx-auto mb-3 shadow-[0_0_20px_rgba(6,182,212,0.3)]">
-          🏛
+  <div id="onboardingModal" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 modal-backdrop hidden">
+    <div class="liquid-panel-elevated rounded-3xl max-w-xl w-full p-5 sm:p-7 relative border border-cyan-400/40 shadow-[0_0_80px_rgba(6,182,212,0.3)] max-h-[92vh] flex flex-col overflow-hidden">
+      
+      <!-- Top Modal Navigation: Back, Step Indicator, Close -->
+      <div class="flex items-center justify-between pb-3 mb-2 border-b border-white/10 shrink-0">
+        <button id="onboardingBackBtn" onclick="goBackOnboardingStep()" class="spring-press flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white font-bold hidden">
+          <span>‹</span> <span>Back</span>
+        </button>
+        <div id="onboardingStepIndicator" class="flex items-center gap-2 mx-auto">
+          <span id="stepDot1" class="w-7 h-1.5 rounded-full bg-cyan-400 transition-all"></span>
+          <span id="stepDot2" class="w-2.5 h-1.5 rounded-full bg-white/20 transition-all"></span>
         </div>
-        <h3 class="text-lg font-black text-white tracking-wide">ENTER TARGET COLLEGE &amp; YEAR</h3>
-        <p class="text-xs text-zinc-400 mt-1">Calibrate your personalized study cockpit and syllabus pacing</p>
+        <button id="onboardingCloseBtn" onclick="closeOnboardingModal()" class="spring-press text-zinc-400 hover:text-white text-lg font-bold hidden px-1" title="Close">
+          ✕
+        </button>
       </div>
 
-      <div class="space-y-3.5 mb-6">
-        <div>
-          <label class="block text-xs font-bold text-zinc-300 mb-1 uppercase tracking-wider">Dream College Target</label>
-          <input type="text" id="setupCollegeInput" placeholder="e.g. AIIMS New Delhi, AIIMS Rishikesh, JIPMER..." 
-                 class="w-full bg-white/10 border border-white/20 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-zinc-500 outline-none focus:border-cyan-400 font-semibold">
-          <p class="text-[10px] text-zinc-500 mt-1">Leave blank to enter custom college anytime.</p>
+      <!-- Scrollable Modal Body -->
+      <div class="overflow-y-auto no-scrollbar flex-1 pr-0.5 space-y-4">
+        
+        <!-- Header -->
+        <div class="text-center pt-1 pb-1">
+          <div class="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-cyan-500/20 border border-cyan-400/50 text-cyan-300 text-2xl font-bold mb-2 shadow-[0_0_20px_rgba(6,182,212,0.3)]">
+            ✨
+          </div>
+          <h2 id="onboardingMainHeading" class="text-xl sm:text-2xl font-black text-white tracking-wide">
+            Hello, welcome to Study Flow 👋
+          </h2>
+          <p id="onboardingSubtitle" class="text-xs sm:text-sm text-zinc-400 mt-1">
+            What is your primary academic goal?
+          </p>
         </div>
 
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs font-bold text-zinc-300 mb-1 uppercase tracking-wider">Exam Year</label>
-            <select id="setupYearSelect" class="w-full bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-cyan-400 font-bold">
-              <option value="2026" class="bg-zinc-900">NEET 2026</option>
-              <option value="2027" class="bg-zinc-900" selected>NEET 2027</option>
-              <option value="2028" class="bg-zinc-900">NEET 2028</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-xs font-bold text-zinc-300 mb-1 uppercase tracking-wider">Initial Slate</label>
-            <div class="text-xs text-emerald-400 font-mono py-2 px-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl font-bold text-center">
-              0/79 Mastered
+        <!-- ===================================================================
+             STEP 1: PRIMARY CATEGORY CARDS
+             =================================================================== -->
+        <div id="onboardingStep1" class="space-y-3 pt-2">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            <!-- Card 1: School & Drop Year / Competitive Exam -->
+            <div onclick="selectOnboardingCategory('competitive')" 
+                 class="spring-press group relative cursor-pointer p-5 rounded-3xl bg-gradient-to-br from-white/[0.08] to-white/[0.02] border border-cyan-400/30 hover:border-cyan-400 hover:shadow-[0_0_30px_rgba(6,182,212,0.25)] transition-all flex flex-col justify-between">
+              <div>
+                <div class="w-12 h-12 rounded-2xl bg-cyan-500/20 border border-cyan-400/40 flex items-center justify-center text-2xl mb-3 shadow-[0_0_15px_rgba(6,182,212,0.2)]">
+                  🏫
+                </div>
+                <h3 class="text-base font-black text-white group-hover:text-cyan-300 transition-colors">
+                  School &amp; Drop Year / Competitive Exam
+                </h3>
+                <p class="text-xs text-zinc-400 mt-1.5 leading-relaxed">
+                  NEET UG, IIT JEE Main &amp; Advanced, Dropper, 12th &amp; 11th target batches.
+                </p>
+              </div>
+              <div class="mt-5 flex items-center justify-between text-xs font-bold text-cyan-400">
+                <span>Select Exam Goal</span>
+                <span class="group-hover:translate-x-1 transition-transform">➔</span>
+              </div>
+            </div>
+
+            <!-- Card 2: College & University Degree -->
+            <div onclick="selectOnboardingCategory('college')" 
+                 class="spring-press group relative cursor-pointer p-5 rounded-3xl bg-gradient-to-br from-white/[0.08] to-white/[0.02] border border-purple-400/30 hover:border-purple-400 hover:shadow-[0_0_30px_rgba(168,85,247,0.25)] transition-all flex flex-col justify-between">
+              <div>
+                <div class="w-12 h-12 rounded-2xl bg-purple-500/20 border border-purple-400/40 flex items-center justify-center text-2xl mb-3 shadow-[0_0_15px_rgba(168,85,247,0.2)]">
+                  🎓
+                </div>
+                <h3 class="text-base font-black text-white group-hover:text-purple-300 transition-colors">
+                  College &amp; University Degree
+                </h3>
+                <p class="text-xs text-zinc-400 mt-1.5 leading-relaxed">
+                  MBBS, B.Tech / BE, CA, Law, BCA, MCA, B.Sc &amp; Semester Course Modules.
+                </p>
+              </div>
+              <div class="mt-5 flex items-center justify-between text-xs font-bold text-purple-400">
+                <span>Select Degree &amp; Courses</span>
+                <span class="group-hover:translate-x-1 transition-transform">➔</span>
+              </div>
             </div>
           </div>
         </div>
+
+        <!-- ===================================================================
+             STEP 2A: SCHOOL / DROPPER / COMPETITIVE EXAM (PW Goal Selector)
+             =================================================================== -->
+        <div id="onboardingStep2A" class="space-y-4 pt-1 hidden">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <label class="block text-xs font-black text-zinc-300 uppercase tracking-wider">
+                Select Your Exam Goal
+              </label>
+              <span class="text-[10px] text-cyan-400 font-semibold font-mono">PW GOAL SELECTOR</span>
+            </div>
+            
+            <!-- PW Goal Card List -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2" id="competitiveGoalsGrid">
+              <!-- Rendered dynamically -->
+            </div>
+          </div>
+
+          <!-- Follow-up Question: Syllabus Completion Deadline -->
+          <div class="p-3.5 rounded-2xl liquid-panel-subtle border border-cyan-400/30">
+            <label class="block text-xs font-black text-white mb-1.5 flex items-center gap-1.5">
+              <span>📅</span>
+              <span>When do you want to complete your syllabus?</span>
+            </label>
+            <div class="grid grid-cols-3 gap-2 mb-2.5">
+              <button type="button" onclick="selectSyllabusPreset('Dec 31')" id="presetBtnDec31" 
+                      class="spring-press py-2 px-1 rounded-xl border border-cyan-400/50 bg-cyan-500/20 text-cyan-200 text-xs font-bold text-center shadow-[0_0_12px_rgba(6,182,212,0.2)]">
+                Dec 31
+                <span class="block text-[9px] text-zinc-400 font-normal">Sprint Horizon</span>
+              </button>
+              <button type="button" onclick="selectSyllabusPreset('Jan 31')" id="presetBtnJan31" 
+                      class="spring-press py-2 px-1 rounded-xl border border-white/10 bg-white/5 text-zinc-300 text-xs font-bold text-center hover:border-white/20">
+                Jan 31
+                <span class="block text-[9px] text-zinc-400 font-normal">Standard</span>
+              </button>
+              <button type="button" onclick="selectSyllabusPreset('Feb 28')" id="presetBtnFeb28" 
+                      class="spring-press py-2 px-1 rounded-xl border border-white/10 bg-white/5 text-zinc-300 text-xs font-bold text-center hover:border-white/20">
+                Feb 28
+                <span class="block text-[9px] text-zinc-400 font-normal">Extended</span>
+              </button>
+            </div>
+
+            <div class="flex items-center justify-between gap-2 text-xs flex-wrap">
+              <span class="text-zinc-400 text-[11px]">Or custom completion date:</span>
+              <input type="date" id="onboardingCustomSyllabusDate" onchange="onCustomSyllabusDatePicked(this.value)" 
+                     class="bg-white/10 border border-white/20 rounded-xl px-2.5 py-1 text-xs text-white outline-none focus:border-cyan-400 font-mono">
+            </div>
+          </div>
+
+          <!-- Dynamic Auto-Calibration Info Pill -->
+          <div id="calibrationPreviewCard" class="p-3 rounded-2xl bg-cyan-950/40 border border-cyan-500/30 text-xs text-cyan-200 leading-relaxed">
+            <!-- Injected dynamically: Countdown target, pre-loaded chapters, subject chips -->
+          </div>
+
+          <!-- Optional Dream College Target -->
+          <div>
+            <label class="block text-xs font-bold text-zinc-300 mb-1 uppercase tracking-wider">Dream Institution / College (Optional)</label>
+            <input type="text" id="onboardingCollegeInput" placeholder="e.g. AIIMS New Delhi, IIT Bombay, JIPMER..." 
+                   class="w-full bg-white/10 border border-white/20 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-zinc-500 outline-none focus:border-cyan-400 font-semibold">
+          </div>
+
+          <!-- Submit Button -->
+          <button onclick="submitCompetitiveOnboarding()" 
+                  class="spring-press w-full py-3 rounded-2xl bg-gradient-to-r from-cyan-500 to-teal-500 text-black font-black text-sm hover:brightness-110 shadow-[0_4px_16px_rgba(6,182,212,0.35)] flex items-center justify-center gap-2">
+            <span>🚀 Calibrate Cockpit &amp; Launch</span>
+          </button>
+        </div>
+
+        <!-- ===================================================================
+             STEP 2B: COLLEGE & UNIVERSITY DEGREE (Modular Course Builder)
+             =================================================================== -->
+        <div id="onboardingStep2B" class="space-y-4 pt-1 hidden">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <label class="block text-xs font-black text-zinc-300 uppercase tracking-wider">
+                Select Your Discipline / Degree
+              </label>
+              <span class="text-[10px] text-purple-400 font-semibold font-mono">DEGREE SELECTOR</span>
+            </div>
+
+            <!-- Grouped Degree Cards -->
+            <div class="space-y-2.5">
+              <!-- Medical & Allied -->
+              <div class="p-2.5 rounded-2xl bg-white/[0.03] border border-white/10">
+                <span class="text-[10px] font-black text-rose-300 uppercase tracking-wider block mb-1.5">🩺 Medical &amp; Allied</span>
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-1.5" id="degGroupMedical">
+                  <!-- MBBS, BDS, BVSc Veterinary, BAMS Ayurvedic, Nursing -->
+                </div>
+              </div>
+
+              <!-- Tech & Engineering -->
+              <div class="p-2.5 rounded-2xl bg-white/[0.03] border border-white/10">
+                <span class="text-[10px] font-black text-cyan-300 uppercase tracking-wider block mb-1.5">💻 Tech &amp; Engineering</span>
+                <div class="grid grid-cols-3 gap-1.5" id="degGroupTech">
+                  <!-- B.Tech / BE, BCA, MCA -->
+                </div>
+              </div>
+
+              <!-- Finance & Law -->
+              <div class="p-2.5 rounded-2xl bg-white/[0.03] border border-white/10">
+                <span class="text-[10px] font-black text-amber-300 uppercase tracking-wider block mb-1.5">📊 Finance &amp; Law</span>
+                <div class="grid grid-cols-3 gap-1.5" id="degGroupFinance">
+                  <!-- CA, CS, B.Com -->
+                </div>
+              </div>
+
+              <!-- Custom Degree / Science -->
+              <div class="p-2.5 rounded-2xl bg-white/[0.03] border border-white/10">
+                <span class="text-[10px] font-black text-emerald-300 uppercase tracking-wider block mb-1.5">🔬 Custom Degree / Science</span>
+                <div class="grid grid-cols-2 gap-1.5" id="degGroupScience">
+                  <!-- B.Sc, Other -->
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Select Year / Semester -->
+          <div>
+            <label class="block text-xs font-black text-zinc-300 mb-1.5 uppercase tracking-wider">Select Year / Semester</label>
+            <div class="grid grid-cols-5 gap-1.5 mb-1.5" id="onboardingYearChips">
+              <!-- Year 1 to Year 5 -->
+            </div>
+            <div class="grid grid-cols-4 sm:grid-cols-8 gap-1" id="onboardingSemChips">
+              <!-- Sem 1 to Sem 8 -->
+            </div>
+          </div>
+
+          <!-- Active Subjects / Courses Input with dynamic unit generator -->
+          <div class="p-3.5 rounded-2xl liquid-panel-subtle border border-purple-400/30">
+            <div class="flex items-center justify-between mb-1">
+              <label class="block text-xs font-black text-white">Active Subjects / Courses</label>
+              <span class="text-[10px] text-purple-300 font-mono font-semibold">MODULAR SYLLABUS</span>
+            </div>
+            <p class="text-[11px] text-zinc-400 mb-2">Comma-separate your active subjects. We'll generate a modular unit builder for each course.</p>
+            <input type="text" id="onboardingCollegeCoursesInput" oninput="onCollegeCoursesInputChanged(this.value)" 
+                   class="w-full bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-xs text-white placeholder-zinc-500 outline-none focus:border-purple-400 font-semibold mb-2">
+            
+            <div class="flex items-center gap-1.5 flex-wrap" id="onboardingParsedCoursesChips">
+              <!-- Rendered dynamically -->
+            </div>
+          </div>
+
+          <!-- Target Goal & Semester Exam Date -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-zinc-300 mb-1 uppercase tracking-wider">Target Academic Goal</label>
+              <input type="text" id="onboardingTargetGoalInput" value="8.5+ CGPA" placeholder="e.g. 8.5+ CGPA or Pass Finals" 
+                     class="w-full bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-xs text-white placeholder-zinc-500 outline-none focus:border-purple-400 font-semibold">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-zinc-300 mb-1 uppercase tracking-wider">Semester Exam / Finals Date</label>
+              <input type="date" id="onboardingCollegeExamDate" 
+                     class="w-full bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-purple-400 font-mono">
+            </div>
+          </div>
+
+          <!-- Submit Button -->
+          <button onclick="submitCollegeOnboarding()" 
+                  class="spring-press w-full py-3 rounded-2xl bg-gradient-to-r from-purple-500 to-indigo-500 text-white font-black text-sm hover:brightness-110 shadow-[0_4px_16px_rgba(168,85,247,0.35)] flex items-center justify-center gap-2">
+            <span>🚀 Build Modular Units &amp; Launch</span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
 
         <div class="p-3 rounded-xl bg-white/5 border border-white/10 text-[11px] text-zinc-400 leading-relaxed">
           <strong>Start Fresh:</strong> Clean slate with unlocked custom target, 0/79 mastered chapters, and empty task list.<br>
@@ -1077,30 +1286,32 @@
   </div>
 
   <!-- =======================================================================
-       MODAL 4: ADD TASK MODAL
+       MODAL 4: ADD TASK MODAL (Dynamic Tagging based on Selected Chip)
        ======================================================================= -->
   <div id="addTaskModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop hidden">
     <div class="liquid-panel-elevated rounded-3xl max-w-md w-full p-6 relative border border-cyan-400/40 shadow-[0_0_60px_rgba(6,182,212,0.25)]">
       <button onclick="closeAddTaskModal()" class="absolute top-4 right-4 text-zinc-400 hover:text-white text-lg">✕</button>
 
-      <div class="flex items-center gap-2 mb-4">
+      <div class="flex items-center gap-2 mb-3">
         <span class="text-xl">📝</span>
         <h3 class="text-base font-black text-white tracking-wide">ADD WORKLOAD TASK</h3>
       </div>
 
+      <!-- Quick Subject Pickers for active day's selected routine -->
+      <div id="taskModalSubjectChipsContainer" class="mb-3">
+        <!-- Injected dynamically -->
+      </div>
+
       <form onsubmit="saveNewTask(event)" class="space-y-3">
         <div>
-          <label class="block text-xs font-semibold text-zinc-300 mb-1">Subject</label>
+          <label class="block text-xs font-semibold text-zinc-300 mb-1">Subject / Course</label>
           <select id="newTaskSubject" onchange="onTaskSubjectChange(this.value)" class="w-full bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-cyan-400 font-semibold">
-            <option value="Physics" class="bg-zinc-900">Physics (Track A)</option>
-            <option value="Chemistry" class="bg-zinc-900">Chemistry (Track B)</option>
-            <option value="Botany" class="bg-zinc-900">Botany (Track B)</option>
-            <option value="Zoology" class="bg-zinc-900">Zoology (Track A)</option>
+            <!-- Populated dynamically -->
           </select>
         </div>
 
         <div>
-          <label class="block text-xs font-semibold text-zinc-300 mb-1">Select Chapter</label>
+          <label class="block text-xs font-semibold text-zinc-300 mb-1">Select Chapter / Unit</label>
           <select id="newTaskChapterSelect" onchange="onTaskChapterSelect(this.value)" class="w-full bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-cyan-400">
             <!-- Populated dynamically -->
           </select>
@@ -1127,6 +1338,26 @@
                    class="w-full bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-xs text-white text-center tabular-nums outline-none focus:border-cyan-400 font-bold">
           </div>
         </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-zinc-300 mb-1">Schedule Day</label>
+          <select id="newTaskDay" onchange="onTaskModalDayChange(this.value)" class="w-full bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-cyan-400 font-bold">
+            <option value="0" class="bg-zinc-900">D0 (Today)</option>
+            <option value="1" class="bg-zinc-900">D1 (Tomorrow)</option>
+            <option value="2" class="bg-zinc-900">D2</option>
+            <option value="3" class="bg-zinc-900">D3</option>
+            <option value="4" class="bg-zinc-900">D4</option>
+            <option value="5" class="bg-zinc-900">D5</option>
+            <option value="6" class="bg-zinc-900">D6</option>
+          </select>
+        </div>
+
+        <button type="submit" class="spring-press w-full py-2.5 rounded-xl bg-cyan-500 text-black font-black text-xs shadow-[0_4px_16px_rgba(6,182,212,0.35)] mt-2">
+          + Add to Workload Matrix
+        </button>
+      </form>
+    </div>
+  </div>
 
         <div>
           <label class="block text-xs font-semibold text-zinc-300 mb-1">Schedule Day</label>
@@ -1334,7 +1565,7 @@
         <!-- DANGER: RESET ALL DATA BUTTON -->
         <button onclick="resetAllData()" class="spring-press w-full py-2.5 rounded-xl bg-rose-500/20 border border-rose-500/50 text-rose-300 hover:bg-rose-500/30 text-xs font-black flex items-center justify-center gap-1.5 mt-2 shadow-[0_2px_12px_rgba(244,63,94,0.15)]">
           <span>🗑️</span>
-          <span>Reset All Data (Wipe Everything to Blank Slate)</span>
+          <span>Reset All Data (Wipe Everything &amp; Restart Onboarding)</span>
         </button>
       </div>
 
@@ -1417,10 +1648,11 @@
        ========================================================================= -->
   <script>
     const STORAGE_KEY = 'STUDY_COCKPIT_LIQUID_V2';
+    const PROFILE_KEY = 'STUDY_FLOW_PROFILE';
     const DAILY_CAP_MINUTES = 510; // 8 hours 30 minutes
 
     /* =========================================================================
-       1. EMBEDDED OFFICIAL NEET UG SYLLABUS DATASET (79 Chapters)
+       1. ACADEMIC DATASETS & OFFICIAL SYLLABI
        ========================================================================= */
     const NEET_SYLLABUS = {
       Physics: [
@@ -1466,18 +1698,105 @@
       ]
     };
 
-    function getChaptersForSubject(subject) {
-      if (!subject) return NEET_SYLLABUS.Physics;
-      const s = subject.trim();
-      if (/physics/i.test(s)) return NEET_SYLLABUS.Physics;
-      if (/chemistry/i.test(s)) return NEET_SYLLABUS.Chemistry;
-      if (/botany/i.test(s)) return NEET_SYLLABUS.Botany;
-      if (/zoology/i.test(s)) return NEET_SYLLABUS.Zoology;
-      if (/bio/i.test(s)) return [...NEET_SYLLABUS.Botany, ...NEET_SYLLABUS.Zoology];
-      return NEET_SYLLABUS.Physics;
-    }
+    const JEE_SYLLABUS = {
+      Physics: [
+        "Kinematics & Vectors", "Laws of Motion & Friction", "Work, Power & Energy", 
+        "Rotational Motion & System of Particles", "Gravitation & Planetary Dynamics", "Thermodynamics & Kinetic Theory", 
+        "Oscillations & Waves", "Electrostatics & Capacitors", "Current Electricity", 
+        "Magnetism & Electromagnetic Induction", "Ray & Wave Optics", "Modern Physics & Semiconductors"
+      ],
+      Chemistry: [
+        "Mole Concept & Atomic Structure", "Chemical Bonding & Molecular Structure", "Chemical Thermodynamics", 
+        "Chemical & Ionic Equilibrium", "Electrochemistry & Chemical Kinetics", "Periodic Table & Periodicity", 
+        "Coordination Compounds", "p-Block, d-Block & f-Block Elements", "Purification & General Organic Chemistry (GOC)", 
+        "Hydrocarbons & Halogen Derivatives", "Oxygen & Nitrogen Functional Groups", "Biomolecules & Practical Chemistry"
+      ],
+      Mathematics: [
+        "Sets, Relations & Functions", "Complex Numbers & Quadratic Equations", "Matrices & Determinants", 
+        "Permutations, Combinations & Binomial Theorem", "Sequences & Series", "Differential Calculus & Limits", 
+        "Applications of Derivatives", "Integral Calculus (Definite & Indefinite)", "Differential Equations", 
+        "Coordinate Geometry & Conic Sections", "Vectors & 3-Dimensional Geometry", "Probability & Statistics"
+      ]
+    };
 
-    // Builder for Clean Initial 79 Chapters (0/79 Mastered)
+    const COLLEGE_DISCIPLINES = {
+      'Medical & Allied': ['MBBS', 'BDS', 'BVSc Veterinary', 'BAMS Ayurvedic', 'Nursing'],
+      'Tech & Engineering': ['B.Tech / BE', 'BCA', 'MCA'],
+      'Finance & Law': ['CA', 'CS', 'B.Com'],
+      'Custom Degree / Science': ['B.Sc', 'Other']
+    };
+
+    const COLLEGE_DEFAULT_COURSES = {
+      'MBBS': 'Anatomy, Physiology, Biochemistry',
+      'BDS': 'Human Anatomy, Dental Anatomy & Embryology, Biochemistry',
+      'BVSc Veterinary': 'Veterinary Anatomy, Veterinary Physiology, Animal Nutrition',
+      'BAMS Ayurvedic': 'Padartha Vigyan, Kriya Sharir, Rachna Sharir',
+      'Nursing': 'Applied Anatomy & Physiology, Foundations of Nursing, Applied Biochemistry',
+      'B.Tech / BE': 'Data Structures, OS, Mathematics',
+      'BCA': 'Programming in C++, Database Management Systems, Computer Networks',
+      'MCA': 'Advanced Algorithms, Cloud Computing & DevOps, Machine Learning',
+      'CA': 'Financial Accounting, Corporate & Other Laws, Direct & Indirect Taxation',
+      'CS': 'Jurisprudence & Interpretation, Company Law, Financial Management',
+      'B.Com': 'Financial Accounting, Business Law, Micro & Macro Economics',
+      'B.Sc': 'Classical Mechanics, Organic Chemistry, Differential Equations',
+      'Other': 'Course Module 1, Course Module 2, Course Module 3'
+    };
+
+    const COMPETITIVE_GOALS = [
+      { id: 'dropper_neet', title: 'Dropper - NEET', type: 'NEET', icon: '🩺', badge: 'Full 79 Chapters • PCBZ' },
+      { id: '12th_neet', title: '12th - NEET', type: 'NEET', icon: '🩺', badge: '12th Boards + NEET' },
+      { id: '11th_neet', title: '11th - NEET', type: 'NEET', icon: '🩺', badge: '11th Foundation + NEET' },
+      { id: 'dropper_jee', title: 'Dropper - IIT JEE', type: 'JEE', icon: '⚛️', badge: 'Main & Advanced • PCM' },
+      { id: '12th_jee', title: '12th - IIT JEE', type: 'JEE', icon: '⚛️', badge: '12th Boards + JEE' },
+      { id: '11th_jee', title: '11th - IIT JEE', type: 'JEE', icon: '⚛️', badge: '11th Foundation + JEE' },
+      { id: 'other_comp', title: 'Other Competitive Exam', type: 'OTHER', icon: '🎯', badge: 'Custom Horizon' }
+    ];
+
+    const MODULAR_UNIT_TITLES = {
+      'anatomy': [
+        'Gross Anatomy & Upper Limb Structures',
+        'Thorax, Abdomen & Pelvis Dissection',
+        'Neuroanatomy & Head-Neck Topography',
+        'Histology, Embryology & University PYQs'
+      ],
+      'physiology': [
+        'General & Nerve-Muscle Physiology',
+        'Cardiovascular & Respiratory Systems',
+        'Renal, Endocrine & Gastrointestinal',
+        'Neurophysiology, Special Senses & PYQs'
+      ],
+      'biochemistry': [
+        'Biomolecules & Enzymatic Kinetics',
+        'Intermediary Metabolism & Bioenergetics',
+        'Molecular Biology & Genetic Information',
+        'Clinical Biochemistry, Nutrition & PYQs'
+      ],
+      'data structures': [
+        'Arrays, Stacks, Queues & Linked Lists',
+        'Trees, Binary Search Trees & Heaps',
+        'Graphs, Traversal & Shortest Paths',
+        'Dynamic Programming, Sorting & PYQs'
+      ],
+      'operating systems': [
+        'Processes, Threads & Concurrency Models',
+        'CPU Scheduling, Synchronization & Deadlocks',
+        'Memory Management & Virtual Memory',
+        'File Systems, Storage I/O & PYQs'
+      ],
+      'os': [
+        'Processes, Threads & Concurrency Models',
+        'CPU Scheduling, Synchronization & Deadlocks',
+        'Memory Management & Virtual Memory',
+        'File Systems, Storage I/O & PYQs'
+      ],
+      'mathematics': [
+        'Linear Algebra & Matrix Transformations',
+        'Differential Calculus & Vector Fields',
+        'Ordinary Differential Equations & Laplace',
+        'Probability, Statistics & Complex Analysis'
+      ]
+    };
+
     function buildInitial79Chapters() {
       const highYieldA = [
         "Rotational", "Optics", "Thermodynamics", "Electrostatics", "Current Electricity", "Semiconductor",
@@ -1505,19 +1824,116 @@
             name: chName,
             subject: sub,
             tier: tier,
-            status: 'unstarted' // Clean 0/79 mastered!
+            status: 'unstarted'
           });
         });
       });
       return list;
     }
 
-    // Demo Initial State for Exploration
+    function buildInitialJeeChapters() {
+      const list = [];
+      let idCounter = 1;
+      Object.keys(JEE_SYLLABUS).forEach(sub => {
+        JEE_SYLLABUS[sub].forEach((chName, idx) => {
+          let tier = 'B';
+          if (idx < 5) tier = 'A';
+          else if (idx >= 9) tier = 'C';
+          list.push({
+            id: 'jee_' + (idCounter++),
+            name: chName,
+            subject: sub,
+            tier: tier,
+            status: 'unstarted'
+          });
+        });
+      });
+      return list;
+    }
+
+    function buildInitialModularUnits(courses) {
+      if (!courses || courses.length === 0) courses = ['Course 1', 'Course 2', 'Course 3'];
+      const list = [];
+      let idCounter = 1;
+      courses.forEach(course => {
+        const cleanCourse = course.trim();
+        if (!cleanCourse) return;
+        const lower = cleanCourse.toLowerCase();
+        let unitTitles = null;
+        for (const key of Object.keys(MODULAR_UNIT_TITLES)) {
+          if (lower === key || lower.includes(key)) {
+            unitTitles = MODULAR_UNIT_TITLES[key];
+            break;
+          }
+        }
+        if (!unitTitles) {
+          unitTitles = [
+            `Unit 1: Foundations & Core Concepts`,
+            `Unit 2: Analytical Principles & Theories`,
+            `Unit 3: Practical Lab & Problem Sets`,
+            `Unit 4: University PYQs & Exam Preparation`
+          ];
+        } else {
+          unitTitles = unitTitles.map((ut, i) => `Unit ${i + 1}: ${ut}`);
+        }
+
+        unitTitles.forEach((title, idx) => {
+          list.push({
+            id: 'u_' + (idCounter++),
+            name: `${cleanCourse} — ${title}`,
+            subject: cleanCourse,
+            tier: idx === 0 || idx === 3 ? 'A' : (idx === 1 ? 'B' : 'C'),
+            status: 'unstarted'
+          });
+        });
+      });
+      return list;
+    }
+
+    function getChaptersForSubject(subject) {
+      if (!subject) return [];
+      const s = subject.trim().toLowerCase();
+      if (appState && appState.syllabus && appState.syllabus.length > 0) {
+        const matched = appState.syllabus.filter(ch => ch.subject.toLowerCase() === s);
+        if (matched.length > 0) return matched.map(ch => ch.name);
+      }
+      if (/physic/i.test(s)) return NEET_SYLLABUS.Physics;
+      if (/chem/i.test(s)) return NEET_SYLLABUS.Chemistry;
+      if (/botan/i.test(s)) return NEET_SYLLABUS.Botany;
+      if (/zool/i.test(s)) return NEET_SYLLABUS.Zoology;
+      if (/math/i.test(s)) return JEE_SYLLABUS.Mathematics;
+      return [`${subject} — Unit 1`, `${subject} — Unit 2`, `${subject} — Unit 3`, `${subject} — Unit 4`];
+    }
+
+    /* =========================================================================
+       2. INITIAL STATE CONSTRUCTORS & PERSISTENCE
+       ========================================================================= */
     const demoInitialState = {
+      profile: {
+        category: 'competitive',
+        goalTitle: 'Dropper - NEET',
+        goalType: 'NEET',
+        discipline: '',
+        degree: '',
+        yearOrSem: '',
+        targetGoal: '700+ Score in NEET UG',
+        examDate: new Date(2027, 4, 2, 14, 0).toISOString(),
+        syllabusDeadline: Date.now() + 120 * 86400000,
+        subjects: ['Physics', 'Chemistry', 'Botany', 'Zoology']
+      },
+      dailyRoutines: {
+        0: ['Physics', 'Zoology'],
+        1: ['Chemistry', 'Botany'],
+        2: ['Physics'],
+        3: ['Chemistry'],
+        4: ['Botany'],
+        5: ['Zoology'],
+        6: ['Physics', 'Chemistry', 'Botany', 'Zoology']
+      },
       dreamCollege: 'AIIMS Rishikesh',
       dreamCollegeLockedUntil: Date.now() + 30 * 86400000,
       targetYear: 2027,
-      syllabusDeadline: Date.now() + 150 * 86400000,
+      syllabusDeadline: Date.now() + 120 * 86400000,
       tasks: [
         { id: 't1', title: 'System of Particles & Rotational Motion (30 MCQs)', subject: 'Physics', type: 'PRACTICE', durationMinutes: 60, dayOffset: 0, completed: true, createdAt: Date.now() },
         { id: 't2', title: 'Human Reproduction PYQ Drill & Notes', subject: 'Zoology', type: 'PRACTICE', durationMinutes: 90, dayOffset: 0, completed: true, createdAt: Date.now() },
@@ -1548,7 +1964,6 @@
       browserSubject: 'Physics'
     };
 
-    // Prepopulate some demo progress on the demo syllabus
     (function prepopulateDemoSyllabus() {
       const demoCompleted = ["Cell: The Unit of Life", "Human Reproduction", "Chemical Bonding & Molecular Structure", "Current Electricity", "Semiconductor Electronics"];
       const demoInProgress = ["System of Particles & Rotational Motion", "Thermodynamics", "Principles of Inheritance & Variation (Genetics I)", "Photosynthesis in Higher Plants"];
@@ -1558,15 +1973,24 @@
       });
     })();
 
-    // Blank Slate State Constructor for First Run & Wipe
     function getBlankSlateState() {
       return {
+        profile: null, // Triggers Onboarding Modal
+        dailyRoutines: {
+          0: ['Physics'],
+          1: ['Chemistry'],
+          2: ['Botany'],
+          3: ['Zoology'],
+          4: ['Physics', 'Zoology'],
+          5: ['Chemistry', 'Botany'],
+          6: ['Physics', 'Chemistry', 'Botany', 'Zoology']
+        },
         dreamCollege: '',
-        dreamCollegeLockedUntil: 0, // UNLOCKED (custom input)
+        dreamCollegeLockedUntil: 0,
         targetYear: 2027,
-        syllabusDeadline: Date.now() + 150 * 86400000,
-        tasks: [], // Empty task lists!
-        syllabus: buildInitial79Chapters(), // ALL 79 unstarted: 0/79 mastered!
+        syllabusDeadline: Date.now() + 120 * 86400000,
+        tasks: [],
+        syllabus: buildInitial79Chapters(),
         errors: [],
         timer: { seconds: 0, running: false, mode: 'stopwatch', targetSeconds: 1500 },
         activeSyllabusTier: 'ALL',
@@ -1582,33 +2006,47 @@
     function loadState() {
       try {
         const saved = localStorage.getItem(STORAGE_KEY);
+        const savedProfile = localStorage.getItem(PROFILE_KEY);
+
         if (saved) {
           appState = JSON.parse(saved);
+          if (!appState.profile && savedProfile) {
+            try { appState.profile = JSON.parse(savedProfile); } catch (e) {}
+          }
           if (!appState.targetYear) appState.targetYear = 2027;
           if (!appState.syllabus || appState.syllabus.length === 0) {
             appState.syllabus = buildInitial79Chapters();
           }
           if (!appState.tasks) appState.tasks = [];
           if (!appState.errors) appState.errors = [];
+          if (!appState.dailyRoutines) appState.dailyRoutines = {};
           if (!appState.activeSyllabusSubject) appState.activeSyllabusSubject = 'ALL';
           if (!appState.activeSyllabusTier) appState.activeSyllabusTier = 'ALL';
+
+          // Trigger onboarding if no profile exists
+          if (!appState.profile || !appState.profile.goalTitle) {
+            setTimeout(() => openOnboardingModal(true), 350);
+          }
         } else {
-          // FIRST RUN: Clean Blank Slate!
+          // Fresh slate - Trigger Onboarding Modal
           appState = getBlankSlateState();
           saveState();
-          setTimeout(() => {
-            const setupModal = document.getElementById('firstRunSetupModal');
-            if (setupModal) setupModal.classList.remove('hidden');
-          }, 350);
+          setTimeout(() => openOnboardingModal(true), 350);
         }
       } catch (e) {
         appState = getBlankSlateState();
+        setTimeout(() => openOnboardingModal(true), 350);
       }
     }
 
     function saveState() {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+        if (appState.profile) {
+          localStorage.setItem(PROFILE_KEY, JSON.stringify(appState.profile));
+        } else {
+          localStorage.removeItem(PROFILE_KEY);
+        }
         const statsEl = document.getElementById('storageStatsText');
         if (statsEl) statsEl.innerText = `localStorage (${appState.tasks.length} tasks saved)`;
       } catch (e) {
@@ -1616,47 +2054,17 @@
       }
     }
 
-    // 1-Time Setup Modal Handlers
-    function confirmSetupStartFresh() {
-      playTactileFeedback('chime');
-      const inputEl = document.getElementById('setupCollegeInput');
-      const yearEl = document.getElementById('setupYearSelect');
-      const chosenCollege = inputEl ? inputEl.value.trim() : '';
-      const chosenYear = yearEl ? parseInt(yearEl.value) : 2027;
-
-      appState.dreamCollege = chosenCollege || 'My Dream College';
-      appState.dreamCollegeLockedUntil = 0; // Unlocked!
-      appState.targetYear = chosenYear;
-      appState.tasks = [];
-      appState.errors = [];
-      appState.syllabus = buildInitial79Chapters();
-
-      saveState();
-      renderAll();
-      const setupModal = document.getElementById('firstRunSetupModal');
-      if (setupModal) setupModal.classList.add('hidden');
-    }
-
-    function confirmSetupLoadDemo() {
-      playTactileFeedback('chime');
-      appState = JSON.parse(JSON.stringify(demoInitialState));
-      saveState();
-      renderAll();
-      const setupModal = document.getElementById('firstRunSetupModal');
-      if (setupModal) setupModal.classList.add('hidden');
-    }
-
-    // Reset All Data (Settings Modal)
+    // Reset All Data (Settings Modal) - Wipes localStorage and triggers onboarding wizard
     function resetAllData() {
-      if (confirm('⚠️ RESET ALL DATA TO BLANK SLATE?\n\nThis will wipe all scheduled tasks, error logs, and custom progress, returning to an unlocked clean slate with 0/79 mastered.\n\nAre you sure you want to proceed?')) {
+      if (confirm('⚠️ RESET ALL DATA & RESTART ONBOARDING?\\n\\nThis will completely wipe your academic goal profile, scheduled tasks, custom modular units, and error logs, and restart the conversational onboarding wizard.\\n\\nAre you sure you want to proceed?')) {
         localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem(PROFILE_KEY);
         appState = getBlankSlateState();
         saveState();
-        renderAll();
         closeBetaPassModal();
-        const setupModal = document.getElementById('firstRunSetupModal');
-        if (setupModal) setupModal.classList.remove('hidden');
+        renderAll();
         playTactileFeedback('alert');
+        openOnboardingModal(true);
       }
     }
 
@@ -1671,46 +2079,523 @@
     }
 
     /* =========================================================================
-       FIXED BOTTOM NAVIGATION & TAB SWITCHER
+       3. CONVERSATIONAL MULTI-STEP ONBOARDING WIZARD (#onboardingModal)
        ========================================================================= */
-    let currentMainTab = 'planner';
+    let onboardingState = {
+      category: 'competitive',
+      selectedGoal: 'Dropper - NEET',
+      syllabusPreset: 'Dec 31',
+      syllabusDeadlineDate: null,
+      dreamCollege: '',
+      selectedDiscipline: 'Medical & Allied',
+      selectedDegree: 'MBBS',
+      selectedYear: 'Year 1',
+      selectedSem: 'Sem 1',
+      collegeCourses: 'Anatomy, Physiology, Biochemistry',
+      targetGoal: '8.5+ CGPA',
+      examDate: null,
+      isFirstRun: true
+    };
 
-    function switchMainTab(tabName) {
+    function openOnboardingModal(forceFirstRun = false) {
       playTactileFeedback('click');
-      currentMainTab = tabName;
+      onboardingState.isFirstRun = forceFirstRun || (!appState.profile || !appState.profile.goalTitle);
 
-      const tabIds = ['planner', 'timer', 'splitter', 'syllabus'];
-      tabIds.forEach(id => {
-        const view = document.getElementById(`tabView-${id}`);
-        const btn = document.getElementById(`navTabBtn-${id}`);
-        if (id === tabName) {
-          if (view) view.classList.remove('hidden');
-          if (btn) {
-            btn.className = "spring-press flex flex-col items-center justify-center py-1.5 px-1 rounded-2xl transition-all text-cyan-400 bg-white/10 font-bold border border-cyan-400/40 shadow-[0_0_12px_rgba(6,182,212,0.25)]";
-          }
-        } else {
-          if (view) view.classList.add('hidden');
-          if (btn) {
-            btn.className = "spring-press flex flex-col items-center justify-center py-1.5 px-1 rounded-2xl transition-all text-zinc-400 hover:text-white font-medium border border-transparent";
+      const modal = document.getElementById('onboardingModal');
+      const closeBtn = document.getElementById('onboardingCloseBtn');
+      const mainHeading = document.getElementById('onboardingMainHeading');
+      const subtitle = document.getElementById('onboardingSubtitle');
+
+      if (modal) modal.classList.remove('hidden');
+
+      if (onboardingState.isFirstRun) {
+        if (closeBtn) closeBtn.classList.add('hidden');
+        if (mainHeading) mainHeading.innerText = 'Hello, welcome to Study Flow 👋';
+        if (subtitle) subtitle.innerText = 'What is your primary academic goal?';
+      } else {
+        if (closeBtn) closeBtn.classList.remove('hidden');
+        if (mainHeading) mainHeading.innerText = 'Change Your Exam / Degree Goal';
+        if (subtitle) subtitle.innerText = 'Switch your academic category or calibrate target deadlines.';
+      }
+
+      goBackOnboardingStep();
+    }
+
+    function closeOnboardingModal() {
+      if (onboardingState.isFirstRun && (!appState.profile || !appState.profile.goalTitle)) {
+        return; // Mandatory setup on first run
+      }
+      const modal = document.getElementById('onboardingModal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function openGoalSelectorModal() {
+      openOnboardingModal(false);
+    }
+
+    function selectOnboardingCategory(category) {
+      playTactileFeedback('click');
+      onboardingState.category = category;
+
+      const step1 = document.getElementById('onboardingStep1');
+      const step2A = document.getElementById('onboardingStep2A');
+      const step2B = document.getElementById('onboardingStep2B');
+      const backBtn = document.getElementById('onboardingBackBtn');
+      const dot1 = document.getElementById('stepDot1');
+      const dot2 = document.getElementById('stepDot2');
+      const subtitle = document.getElementById('onboardingSubtitle');
+
+      if (step1) step1.classList.add('hidden');
+      if (backBtn) backBtn.classList.remove('hidden');
+
+      if (dot1 && dot2) {
+        dot1.className = 'w-2.5 h-1.5 rounded-full bg-white/20 transition-all';
+        dot2.className = 'w-7 h-1.5 rounded-full bg-cyan-400 transition-all';
+      }
+
+      if (category === 'competitive') {
+        if (step2A) step2A.classList.remove('hidden');
+        if (step2B) step2B.classList.add('hidden');
+        if (subtitle) subtitle.innerText = 'Select your competitive exam goal & target completion date.';
+        renderCompetitiveGoalsList();
+        selectSyllabusPreset('Dec 31');
+        updateCompetitiveCalibrationCard();
+      } else {
+        if (step2A) step2A.classList.add('hidden');
+        if (step2B) step2B.classList.remove('hidden');
+        if (subtitle) subtitle.innerText = 'Select your discipline, year/sem, and enter active courses.';
+        renderCollegeDegreesList();
+        renderCollegeYearSemChips();
+        selectCollegeDegree('MBBS', 'Medical & Allied');
+      }
+    }
+
+    function goBackOnboardingStep() {
+      playTactileFeedback('click');
+      const step1 = document.getElementById('onboardingStep1');
+      const step2A = document.getElementById('onboardingStep2A');
+      const step2B = document.getElementById('onboardingStep2B');
+      const backBtn = document.getElementById('onboardingBackBtn');
+      const dot1 = document.getElementById('stepDot1');
+      const dot2 = document.getElementById('stepDot2');
+      const subtitle = document.getElementById('onboardingSubtitle');
+
+      if (step1) step1.classList.remove('hidden');
+      if (step2A) step2A.classList.add('hidden');
+      if (step2B) step2B.classList.add('hidden');
+      if (backBtn) backBtn.classList.add('hidden');
+
+      if (dot1 && dot2) {
+        dot1.className = 'w-7 h-1.5 rounded-full bg-cyan-400 transition-all';
+        dot2.className = 'w-2.5 h-1.5 rounded-full bg-white/20 transition-all';
+      }
+
+      if (subtitle) {
+        subtitle.innerText = onboardingState.isFirstRun ? 'What is your primary academic goal?' : 'Switch your academic category or calibrate target deadlines.';
+      }
+    }
+
+    function renderCompetitiveGoalsList() {
+      const container = document.getElementById('competitiveGoalsGrid');
+      if (!container) return;
+      container.innerHTML = '';
+
+      COMPETITIVE_GOALS.forEach(goal => {
+        const isSelected = (onboardingState.selectedGoal === goal.title);
+        const card = document.createElement('div');
+        card.onclick = () => selectCompetitiveGoal(goal.title);
+        card.className = `spring-press cursor-pointer p-3 rounded-2xl border transition-all flex items-center justify-between gap-2 ${
+          isSelected 
+            ? 'bg-cyan-500/20 border-cyan-400 text-white shadow-[0_0_16px_rgba(6,182,212,0.3)] font-bold' 
+            : 'bg-white/5 border-white/10 text-zinc-300 hover:text-white hover:border-white/25'
+        }`;
+        card.innerHTML = `
+          <div class="flex items-center gap-2.5 min-w-0">
+            <span class="text-xl">${goal.icon}</span>
+            <div class="min-w-0">
+              <div class="text-xs sm:text-sm font-black truncate">${goal.title}</div>
+              <div class="text-[10px] text-zinc-400 font-medium">${goal.badge}</div>
+            </div>
+          </div>
+          <div class="w-5 h-5 rounded-full border flex items-center justify-center shrink-0 ${
+            isSelected ? 'border-cyan-400 bg-cyan-400 text-black font-black text-xs' : 'border-white/20 bg-transparent'
+          }">
+            ${isSelected ? '✓' : ''}
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function selectCompetitiveGoal(goalTitle) {
+      playTactileFeedback('click');
+      onboardingState.selectedGoal = goalTitle;
+      renderCompetitiveGoalsList();
+      updateCompetitiveCalibrationCard();
+    }
+
+    function selectSyllabusPreset(preset) {
+      playTactileFeedback('click');
+      onboardingState.syllabusPreset = preset;
+      const now = new Date();
+      const currentYear = now.getFullYear();
+
+      let targetDate;
+      if (preset === 'Dec 31') {
+        targetDate = new Date(currentYear, 11, 31, 23, 59, 59);
+        if (targetDate < now) targetDate = new Date(currentYear + 1, 11, 31, 23, 59, 59);
+      } else if (preset === 'Jan 31') {
+        targetDate = new Date(currentYear + 1, 0, 31, 23, 59, 59);
+      } else if (preset === 'Feb 28') {
+        targetDate = new Date(currentYear + 1, 1, 28, 23, 59, 59);
+      }
+
+      onboardingState.syllabusDeadlineDate = targetDate ? targetDate.getTime() : (Date.now() + 120 * 86400000);
+
+      const presets = ['Dec 31', 'Jan 31', 'Feb 28'];
+      presets.forEach(p => {
+        const btn = document.getElementById(`presetBtn${p.replace(' ', '')}`);
+        if (btn) {
+          if (p === preset) {
+            btn.className = 'spring-press py-2 px-1 rounded-xl border border-cyan-400/50 bg-cyan-500/20 text-cyan-200 text-xs font-bold text-center shadow-[0_0_12px_rgba(6,182,212,0.2)]';
+          } else {
+            btn.className = 'spring-press py-2 px-1 rounded-xl border border-white/10 bg-white/5 text-zinc-300 text-xs font-bold text-center hover:border-white/20';
           }
         }
       });
 
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      const customPicker = document.getElementById('onboardingCustomSyllabusDate');
+      if (customPicker && targetDate) {
+        customPicker.value = targetDate.toISOString().split('T')[0];
+      }
+
+      updateCompetitiveCalibrationCard();
     }
 
-    function scrollToSection(id) {
+    function onCustomSyllabusDatePicked(val) {
+      if (!val) return;
       playTactileFeedback('click');
-      if (id === 'matrixSection' || id === 'planner') switchMainTab('planner');
-      else if (id === 'focusDeck' || id === 'timer') switchMainTab('timer');
-      else if (id === 'marathonSection' || id === 'splitter') switchMainTab('splitter');
-      else if (id === 'syllabusSection' || id === 'errorLogSection' || id === 'syllabus') switchMainTab('syllabus');
+      onboardingState.syllabusPreset = 'Custom';
+      onboardingState.syllabusDeadlineDate = new Date(val + 'T23:59:59').getTime();
+
+      ['Dec 31', 'Jan 31', 'Feb 28'].forEach(p => {
+        const btn = document.getElementById(`presetBtn${p.replace(' ', '')}`);
+        if (btn) btn.className = 'spring-press py-2 px-1 rounded-xl border border-white/10 bg-white/5 text-zinc-300 text-xs font-bold text-center hover:border-white/20';
+      });
+
+      updateCompetitiveCalibrationCard();
+    }
+
+    function updateCompetitiveCalibrationCard() {
+      const card = document.getElementById('calibrationPreviewCard');
+      if (!card) return;
+      const isNeet = /neet/i.test(onboardingState.selectedGoal);
+      const isJee = /jee/i.test(onboardingState.selectedGoal);
+
+      if (isNeet) {
+        card.innerHTML = `
+          <div class="font-bold text-cyan-300 flex items-center gap-1.5 mb-1">
+            <span>⚡</span><span>Auto-Calibrated for NEET UG:</span>
+          </div>
+          <div class="text-[11px] text-zinc-300 space-y-0.5">
+            <div>• <strong>Countdown Target:</strong> First Sunday of May (Official NEET UG Window)</div>
+            <div>• <strong>Pre-Loaded Syllabus:</strong> 79 Official NEET Chapters (Physics, Chemistry, Botany, Zoology)</div>
+            <div>• <strong>Active Subject Chips:</strong> [Physics, Chemistry, Botany, Zoology]</div>
+          </div>
+        `;
+      } else if (isJee) {
+        card.innerHTML = `
+          <div class="font-bold text-cyan-300 flex items-center gap-1.5 mb-1">
+            <span>⚡</span><span>Auto-Calibrated for IIT JEE:</span>
+          </div>
+          <div class="text-[11px] text-zinc-300 space-y-0.5">
+            <div>• <strong>Countdown Target:</strong> Jan / Apr JEE Main Windows</div>
+            <div>• <strong>Pre-Loaded Syllabus:</strong> Core JEE Syllabus (Physics, Chemistry, Mathematics)</div>
+            <div>• <strong>Active Subject Chips:</strong> [Physics, Chemistry, Mathematics]</div>
+          </div>
+        `;
+      } else {
+        card.innerHTML = `
+          <div class="font-bold text-cyan-300 flex items-center gap-1.5 mb-1">
+            <span>⚡</span><span>Auto-Calibrated for Competitive Prep:</span>
+          </div>
+          <div class="text-[11px] text-zinc-300 space-y-0.5">
+            <div>• <strong>Countdown Target:</strong> Target Syllabus Completion Horizon</div>
+            <div>• <strong>Active Subject Chips:</strong> Dynamic multi-subject tracking</div>
+          </div>
+        `;
+      }
+    }
+
+    function submitCompetitiveOnboarding() {
+      playTactileFeedback('chime');
+      const goalTitle = onboardingState.selectedGoal;
+      const isNeet = /neet/i.test(goalTitle);
+      const isJee = /jee/i.test(goalTitle);
+
+      let goalType = 'OTHER';
+      let subjects = ['Physics', 'Chemistry', 'Mathematics', 'Aptitude'];
+      let syllabus = [];
+
+      if (isNeet) {
+        goalType = 'NEET';
+        subjects = ['Physics', 'Chemistry', 'Botany', 'Zoology'];
+        syllabus = buildInitial79Chapters();
+      } else if (isJee) {
+        goalType = 'JEE';
+        subjects = ['Physics', 'Chemistry', 'Mathematics'];
+        syllabus = buildInitialJeeChapters();
+      } else {
+        goalType = 'OTHER';
+        syllabus = buildInitialModularUnits(['General Aptitude', 'Core Section A', 'Core Section B']);
+      }
+
+      const collegeInput = document.getElementById('onboardingCollegeInput');
+      const chosenCollege = collegeInput ? collegeInput.value.trim() : '';
+
+      appState.profile = {
+        category: 'competitive',
+        goalTitle: goalTitle,
+        goalType: goalType,
+        discipline: '',
+        degree: '',
+        yearOrSem: '',
+        targetGoal: isNeet ? '700+ Score in NEET UG' : '99.5+ Percentile in JEE',
+        examDate: isNeet ? getUpcomingNeetTargetDate().toISOString() : (isJee ? new Date(2027, 0, 24).toISOString() : new Date(onboardingState.syllabusDeadlineDate || Date.now() + 120 * 86400000).toISOString()),
+        syllabusDeadline: onboardingState.syllabusDeadlineDate || (Date.now() + 120 * 86400000),
+        subjects: subjects
+      };
+
+      appState.targetYear = 2027;
+      appState.syllabusDeadline = appState.profile.syllabusDeadline;
+      appState.syllabus = syllabus;
+      appState.dreamCollege = chosenCollege || (isNeet ? 'AIIMS New Delhi' : (isJee ? 'IIT Bombay' : 'Dream Goal'));
+      appState.dreamCollegeLockedUntil = 0;
+
+      // Initialize daily routines with subjects
+      appState.dailyRoutines = {
+        0: [subjects[0]],
+        1: [subjects[1] || subjects[0]],
+        2: [subjects[2] || subjects[0]],
+        3: [subjects[3] || subjects[0]],
+        4: subjects.slice(0, 2),
+        5: subjects.slice(1, 3),
+        6: [...subjects]
+      };
+
+      saveState();
+      closeOnboardingModal();
+      renderAll();
+      alert(`✨ Cockpit Calibrated for ${goalTitle}!\nCountdown, syllabus, and dynamic daily matrix active.`);
+    }
+
+    function renderCollegeDegreesList() {
+      Object.keys(COLLEGE_DISCIPLINES).forEach(disc => {
+        let containerId = 'degGroupMedical';
+        if (disc.includes('Tech')) containerId = 'degGroupTech';
+        else if (disc.includes('Finance')) containerId = 'degGroupFinance';
+        else if (disc.includes('Custom')) containerId = 'degGroupScience';
+
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        container.innerHTML = '';
+
+        COLLEGE_DISCIPLINES[disc].forEach(deg => {
+          const isSelected = (onboardingState.selectedDegree === deg);
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.onclick = () => selectCollegeDegree(deg, disc);
+          btn.className = `spring-press py-2 px-2 rounded-xl text-xs font-bold text-center border transition-all ${
+            isSelected 
+              ? 'bg-purple-500/25 border-purple-400 text-white shadow-[0_0_14px_rgba(168,85,247,0.3)]' 
+              : 'bg-white/5 border-white/10 text-zinc-300 hover:text-white hover:border-white/20'
+          }`;
+          btn.innerText = deg;
+          container.appendChild(btn);
+        });
+      });
+    }
+
+    function selectCollegeDegree(degree, discipline) {
+      playTactileFeedback('click');
+      onboardingState.selectedDegree = degree;
+      onboardingState.selectedDiscipline = discipline;
+      renderCollegeDegreesList();
+
+      const defaultCourses = COLLEGE_DEFAULT_COURSES[degree] || 'Course Module 1, Course Module 2, Course Module 3';
+      const coursesInput = document.getElementById('onboardingCollegeCoursesInput');
+      if (coursesInput) coursesInput.value = defaultCourses;
+      onboardingState.collegeCourses = defaultCourses;
+      renderParsedCoursesChips(defaultCourses);
+
+      const targetInput = document.getElementById('onboardingTargetGoalInput');
+      if (targetInput) {
+        if (degree === 'MBBS' || degree === 'BDS') targetInput.value = 'Pass Finals with Distinction';
+        else if (degree.includes('B.Tech') || degree.includes('MCA')) targetInput.value = '8.5+ CGPA';
+        else if (degree === 'CA') targetInput.value = 'Pass Both Groups (AIR Top 50)';
+        else targetInput.value = '8.5+ CGPA';
+      }
+
+      const examInput = document.getElementById('onboardingCollegeExamDate');
+      if (examInput && !examInput.value) {
+        const future = new Date(Date.now() + 90 * 86400000);
+        examInput.value = future.toISOString().split('T')[0];
+      }
+    }
+
+    function renderCollegeYearSemChips() {
+      const yearContainer = document.getElementById('onboardingYearChips');
+      const semContainer = document.getElementById('onboardingSemChips');
+
+      if (yearContainer) {
+        yearContainer.innerHTML = '';
+        ['Year 1', 'Year 2', 'Year 3', 'Year 4', 'Year 5'].forEach(yr => {
+          const isSel = (onboardingState.selectedYear === yr);
+          const b = document.createElement('button');
+          b.type = 'button';
+          b.onclick = () => selectCollegeYear(yr);
+          b.className = `spring-press py-1.5 rounded-lg text-xs font-bold border transition-all ${
+            isSel ? 'bg-purple-500/25 border-purple-400 text-white shadow-[0_0_10px_rgba(168,85,247,0.3)]' : 'bg-white/5 border-white/10 text-zinc-400 hover:text-white'
+          }`;
+          b.innerText = yr;
+          yearContainer.appendChild(b);
+        });
+      }
+
+      if (semContainer) {
+        semContainer.innerHTML = '';
+        ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4', 'Sem 5', 'Sem 6', 'Sem 7', 'Sem 8'].forEach(sem => {
+          const isSel = (onboardingState.selectedSem === sem);
+          const b = document.createElement('button');
+          b.type = 'button';
+          b.onclick = () => selectCollegeSem(sem);
+          b.className = `spring-press py-1.5 rounded-lg text-xs font-bold border transition-all ${
+            isSel ? 'bg-purple-500/25 border-purple-400 text-white shadow-[0_0_10px_rgba(168,85,247,0.3)]' : 'bg-white/5 border-white/10 text-zinc-400 hover:text-white'
+          }`;
+          b.innerText = sem;
+          semContainer.appendChild(b);
+        });
+      }
+    }
+
+    function selectCollegeYear(year) {
+      playTactileFeedback('click');
+      onboardingState.selectedYear = year;
+      renderCollegeYearSemChips();
+    }
+
+    function selectCollegeSem(sem) {
+      playTactileFeedback('click');
+      onboardingState.selectedSem = sem;
+      renderCollegeYearSemChips();
+    }
+
+    function onCollegeCoursesInputChanged(val) {
+      onboardingState.collegeCourses = val;
+      renderParsedCoursesChips(val);
+    }
+
+    function renderParsedCoursesChips(val) {
+      const container = document.getElementById('onboardingParsedCoursesChips');
+      if (!container) return;
+      container.innerHTML = '';
+      const parsed = val.split(/[,;\n]/).map(s => s.trim()).filter(Boolean);
+      if (parsed.length === 0) {
+        container.innerHTML = `<span class="text-[11px] text-zinc-500 italic">No courses entered yet</span>`;
+        return;
+      }
+      parsed.forEach(c => {
+        const chip = document.createElement('span');
+        chip.className = 'px-2 py-0.5 rounded-md bg-purple-500/20 text-purple-300 border border-purple-500/30 text-[10px] font-bold';
+        chip.innerText = `📚 ${c} (4 Units)`;
+        container.appendChild(chip);
+      });
+    }
+
+    function submitCollegeOnboarding() {
+      playTactileFeedback('chime');
+      const degree = onboardingState.selectedDegree;
+      const yearSem = `${onboardingState.selectedYear} / ${onboardingState.selectedSem}`;
+      const rawCourses = document.getElementById('onboardingCollegeCoursesInput')?.value || onboardingState.collegeCourses;
+      const parsedCourses = rawCourses.split(/[,;\n]/).map(s => s.trim()).filter(Boolean);
+
+      if (parsedCourses.length === 0) {
+        alert('Please enter at least one active subject / course.');
+        return;
+      }
+
+      const targetGoal = document.getElementById('onboardingTargetGoalInput')?.value.trim() || '8.5+ CGPA';
+      const examDateVal = document.getElementById('onboardingCollegeExamDate')?.value;
+      const examDate = examDateVal ? new Date(examDateVal + 'T23:59:59').toISOString() : new Date(Date.now() + 90 * 86400000).toISOString();
+      const deadlineMs = examDateVal ? new Date(examDateVal + 'T23:59:59').getTime() : (Date.now() + 90 * 86400000);
+
+      // Modular Syllabus: dynamic custom unit builder for entered courses
+      const modularUnits = buildInitialModularUnits(parsedCourses);
+
+      appState.profile = {
+        category: 'college',
+        goalTitle: `${degree} (${onboardingState.selectedYear})`,
+        goalType: 'COLLEGE',
+        discipline: onboardingState.selectedDiscipline,
+        degree: degree,
+        yearOrSem: yearSem,
+        targetGoal: targetGoal,
+        examDate: examDate,
+        syllabusDeadline: deadlineMs,
+        subjects: parsedCourses
+      };
+
+      appState.targetYear = new Date(examDate).getFullYear();
+      appState.syllabusDeadline = deadlineMs;
+      appState.syllabus = modularUnits;
+      appState.dreamCollege = `${degree} (${targetGoal})`;
+      appState.dreamCollegeLockedUntil = 0;
+
+      // Initialize daily workload matrix routines with college course tags
+      appState.dailyRoutines = {
+        0: [parsedCourses[0]],
+        1: [parsedCourses[1] || parsedCourses[0]],
+        2: [parsedCourses[2] || parsedCourses[0]],
+        3: [parsedCourses[0]],
+        4: parsedCourses.slice(0, 2),
+        5: parsedCourses.slice(1, 3),
+        6: [...parsedCourses]
+      };
+
+      saveState();
+      closeOnboardingModal();
+      renderAll();
+      alert(`🎓 Modular Syllabus Created for ${degree}!\n${modularUnits.length} course units generated across ${parsedCourses.length} subjects.`);
     }
 
     /* =========================================================================
-       2. DREAM COLLEGE ANCHOR (UNLOCKED FIRST RUN / 30-DAY HARD LOCK ENGINE)
+       4. TOP BANNER GOAL PILL & TARGET ANCHOR
        ========================================================================= */
+    function updateGoalPillUI() {
+      const profile = appState.profile;
+      const labelEl = document.getElementById('goalPillLabel');
+      const iconEl = document.getElementById('goalPillIcon');
+      const badgeEl = document.getElementById('goalPillBadge');
+
+      if (!profile || !profile.goalTitle) {
+        if (labelEl) labelEl.innerText = 'SELECT GOAL';
+        if (iconEl) iconEl.innerText = '🎯';
+        if (badgeEl) badgeEl.innerText = 'SET ▾';
+        return;
+      }
+
+      if (labelEl) labelEl.innerText = profile.goalTitle.toUpperCase();
+      if (iconEl) {
+        if (profile.category === 'college') iconEl.innerText = '🎓';
+        else if (/neet/i.test(profile.goalTitle)) iconEl.innerText = '🩺';
+        else if (/jee/i.test(profile.goalTitle)) iconEl.innerText = '⚛️';
+        else iconEl.innerText = '🏫';
+      }
+      if (badgeEl) badgeEl.innerText = 'GOAL ▾';
+    }
+
     function updateDreamCollegeUI() {
+      // Kept for backward compatibility with dreamCollegeModal
       const collegeName = appState.dreamCollege || 'TARGET: NOT SET';
       const lockedUntil = appState.dreamCollegeLockedUntil || 0;
       const now = Date.now();
@@ -1750,52 +2635,54 @@
       const editView = document.getElementById('dreamCollegeEditView');
 
       if (isLocked) {
-        lockedView.classList.remove('hidden');
-        editView.classList.add('hidden');
+        if (lockedView) lockedView.classList.remove('hidden');
+        if (editView) editView.classList.add('hidden');
 
         const daysRemaining = Math.max(1, Math.ceil((lockedUntil - now) / 86400000));
-        document.getElementById('lockedCollegeNameDisplay').innerText = appState.dreamCollege;
-        document.getElementById('lockedDaysRemainingText').innerText = `Locked for ${daysRemaining} more day${daysRemaining > 1 ? 's' : ''} to build focus`;
+        const nameDisp = document.getElementById('lockedCollegeNameDisplay');
+        const daysDisp = document.getElementById('lockedDaysRemainingText');
+        const barDisp = document.getElementById('lockedDaysProgressBar');
+        const unlockDisp = document.getElementById('targetUnlockDateText');
 
+        if (nameDisp) nameDisp.innerText = appState.dreamCollege;
+        if (daysDisp) daysDisp.innerText = `Locked for ${daysRemaining} more day${daysRemaining > 1 ? 's' : ''} to build focus`;
         const pct = Math.min(100, Math.max(5, (daysRemaining / 30) * 100));
-        document.getElementById('lockedDaysProgressBar').style.width = `${pct}%`;
-
+        if (barDisp) barDisp.style.width = `${pct}%`;
         const unlockDate = new Date(lockedUntil);
-        document.getElementById('targetUnlockDateText').innerText = unlockDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        if (unlockDisp) unlockDisp.innerText = unlockDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
       } else {
-        lockedView.classList.add('hidden');
-        editView.classList.remove('hidden');
-
-        // Pre-fill inputs
+        if (lockedView) lockedView.classList.add('hidden');
+        if (editView) editView.classList.remove('hidden');
         const customInput = document.getElementById('customCollegeNameInput');
         if (customInput && appState.dreamCollege) customInput.value = appState.dreamCollege;
       }
 
-      document.getElementById('dreamCollegeModal').classList.remove('hidden');
+      const modal = document.getElementById('dreamCollegeModal');
+      if (modal) modal.classList.remove('hidden');
     }
 
     function closeDreamCollegeModal() {
-      document.getElementById('dreamCollegeModal').classList.add('hidden');
+      const modal = document.getElementById('dreamCollegeModal');
+      if (modal) modal.classList.add('hidden');
     }
 
     function onDreamCollegePresetChange(val) {
       const customInput = document.getElementById('customCollegeInputContainer');
-      if (val === 'CUSTOM') {
-        customInput.classList.remove('hidden');
-      } else {
-        customInput.classList.add('hidden');
+      if (customInput) {
+        if (val === 'CUSTOM') customInput.classList.remove('hidden');
+        else customInput.classList.add('hidden');
       }
     }
 
     function saveDreamCollegeUnlocked() {
       playTactileFeedback('click');
-      const selectVal = document.getElementById('selectDreamCollegeInput').value;
+      const selectVal = document.getElementById('selectDreamCollegeInput')?.value || 'AIIMS Rishikesh';
       let finalName = selectVal;
       if (selectVal === 'CUSTOM') {
-        finalName = document.getElementById('customCollegeNameInput').value.trim() || 'Custom College';
+        finalName = document.getElementById('customCollegeNameInput')?.value.trim() || 'Custom College';
       }
       appState.dreamCollege = finalName;
-      appState.dreamCollegeLockedUntil = 0; // Remains unlocked!
+      appState.dreamCollegeLockedUntil = 0;
       saveState();
       updateDreamCollegeUI();
       closeDreamCollegeModal();
@@ -1803,22 +2690,58 @@
 
     function confirmDreamCollegeLock() {
       playTactileFeedback('chime');
-      const selectVal = document.getElementById('selectDreamCollegeInput').value;
+      const selectVal = document.getElementById('selectDreamCollegeInput')?.value || 'AIIMS Rishikesh';
       let finalName = selectVal;
       if (selectVal === 'CUSTOM') {
-        finalName = document.getElementById('customCollegeNameInput').value.trim() || 'AIIMS Rishikesh';
+        finalName = document.getElementById('customCollegeNameInput')?.value.trim() || 'AIIMS Rishikesh';
       }
-
       appState.dreamCollege = finalName;
-      appState.dreamCollegeLockedUntil = Date.now() + 30 * 86400000; // 30 Calendar Days
+      appState.dreamCollegeLockedUntil = Date.now() + 30 * 86400000;
       saveState();
       updateDreamCollegeUI();
       closeDreamCollegeModal();
-      alert(`🔒 TARGET LOCKED: "${finalName}"\nLocked for 30 uninterrupted days of unwavering conviction!`);
+      alert(`🔒 TARGET LOCKED: "${finalName}"\\nLocked for 30 uninterrupted days of unwavering conviction!`);
     }
 
     /* =========================================================================
-       3. DUAL COUNTDOWNS & DYNAMIC SYLLABUS PACING ENGINE
+       5. FIXED BOTTOM NAVIGATION & TAB SWITCHER
+       ========================================================================= */
+    let currentMainTab = 'planner';
+
+    function switchMainTab(tabName) {
+      playTactileFeedback('click');
+      currentMainTab = tabName;
+
+      const tabIds = ['planner', 'timer', 'splitter', 'syllabus'];
+      tabIds.forEach(id => {
+        const view = document.getElementById(`tabView-${id}`);
+        const btn = document.getElementById(`navTabBtn-${id}`);
+        if (id === tabName) {
+          if (view) view.classList.remove('hidden');
+          if (btn) {
+            btn.className = "spring-press flex flex-col items-center justify-center py-1.5 px-1 rounded-2xl transition-all text-cyan-400 bg-white/10 font-bold border border-cyan-400/40 shadow-[0_0_12px_rgba(6,182,212,0.25)]";
+          }
+        } else {
+          if (view) view.classList.add('hidden');
+          if (btn) {
+            btn.className = "spring-press flex flex-col items-center justify-center py-1.5 px-1 rounded-2xl transition-all text-zinc-400 hover:text-white font-medium border border-transparent";
+          }
+        }
+      });
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function scrollToSection(id) {
+      playTactileFeedback('click');
+      if (id === 'matrixSection' || id === 'planner') switchMainTab('planner');
+      else if (id === 'focusDeck' || id === 'timer') switchMainTab('timer');
+      else if (id === 'marathonSection' || id === 'splitter') switchMainTab('splitter');
+      else if (id === 'syllabusSection' || id === 'errorLogSection' || id === 'syllabus') switchMainTab('syllabus');
+    }
+
+    /* =========================================================================
+       6. DUAL COUNTDOWNS & DYNAMIC SYLLABUS PACING ENGINE
        ========================================================================= */
     function getFirstSundayOfMay(year) {
       const may1 = new Date(year, 4, 1);
@@ -1833,29 +2756,66 @@
     }
 
     function updateDualCountdowns() {
-      const targetYear = appState.targetYear || 2027;
+      const profile = appState.profile;
       const targetLabel = document.getElementById('examCountdownLabel');
-      if (targetLabel) targetLabel.innerText = `NEET '${String(targetYear).slice(-2)}:`;
-
-      const targetDate = getUpcomingNeetTargetDate();
-      const now = new Date();
-      const diff = targetDate - now;
-
       const countdownText = document.getElementById('examCountdownText');
-      if (countdownText) {
-        if (diff <= 0) {
-          countdownText.innerText = "EXAM TODAY!";
-        } else {
-          const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-          const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
-          const mins = Math.floor((diff / 1000 / 60) % 60);
-          const secs = Math.floor((diff / 1000) % 60);
-          countdownText.innerText = `${days}d ${String(hours).padStart(2, '0')}h ${String(mins).padStart(2, '0')}m ${String(secs).padStart(2, '0')}s`;
+      const now = new Date();
+
+      if (!profile || profile.goalType === 'NEET') {
+        const targetYear = appState.targetYear || 2027;
+        if (targetLabel) targetLabel.innerText = `NEET '${String(targetYear).slice(-2)}:`;
+        const targetDate = getUpcomingNeetTargetDate();
+        const diff = targetDate - now;
+
+        if (countdownText) {
+          if (diff <= 0) {
+            countdownText.innerText = "EXAM TODAY!";
+          } else {
+            const days = Math.floor(diff / 86400000);
+            const hours = Math.floor((diff / 3600000) % 24);
+            const mins = Math.floor((diff / 60000) % 60);
+            const secs = Math.floor((diff / 1000) % 60);
+            countdownText.innerText = `${days}d ${String(hours).padStart(2, '0')}h ${String(mins).padStart(2, '0')}m ${String(secs).padStart(2, '0')}s`;
+          }
+        }
+      } else if (profile.goalType === 'JEE') {
+        if (targetLabel) targetLabel.innerText = `JEE MAIN:`;
+        let jeeDate = new Date(appState.targetYear || 2027, 0, 24, 9, 0, 0);
+        if (jeeDate < now) jeeDate = new Date(appState.targetYear || 2027, 3, 5, 9, 0, 0);
+        const diff = jeeDate - now;
+
+        if (countdownText) {
+          if (diff <= 0) {
+            countdownText.innerText = "EXAM TODAY!";
+          } else {
+            const days = Math.floor(diff / 86400000);
+            const hours = Math.floor((diff / 3600000) % 24);
+            const mins = Math.floor((diff / 60000) % 60);
+            const secs = Math.floor((diff / 1000) % 60);
+            countdownText.innerText = `${days}d ${String(hours).padStart(2, '0')}h ${String(mins).padStart(2, '0')}m ${String(secs).padStart(2, '0')}s`;
+          }
+        }
+      } else {
+        const examName = profile.degree || 'FINALS';
+        if (targetLabel) targetLabel.innerText = `${examName.toUpperCase()}:`;
+        const targetDate = profile.examDate ? new Date(profile.examDate) : new Date(now.getTime() + 90 * 86400000);
+        const diff = targetDate - now;
+
+        if (countdownText) {
+          if (diff <= 0) {
+            countdownText.innerText = "EXAM TODAY!";
+          } else {
+            const days = Math.floor(diff / 86400000);
+            const hours = Math.floor((diff / 3600000) % 24);
+            const mins = Math.floor((diff / 60000) % 60);
+            const secs = Math.floor((diff / 1000) % 60);
+            countdownText.innerText = `${days}d ${String(hours).padStart(2, '0')}h ${String(mins).padStart(2, '0')}m ${String(secs).padStart(2, '0')}s`;
+          }
         }
       }
 
       // Syllabus Target Deadline
-      const deadline = appState.syllabusDeadline || (Date.now() + 150 * 86400000);
+      const deadline = appState.syllabusDeadline || (Date.now() + 120 * 86400000);
       const diffDeadline = deadline - now.getTime();
       const daysLeft = Math.max(1, Math.ceil(diffDeadline / 86400000));
       const deadTextEl = document.getElementById('syllabusDeadlineText');
@@ -1866,36 +2826,40 @@
 
     function updateDynamicPacingTelemetry(daysLeft) {
       if (!daysLeft) {
-        const deadline = appState.syllabusDeadline || (Date.now() + 150 * 86400000);
+        const deadline = appState.syllabusDeadline || (Date.now() + 120 * 86400000);
         daysLeft = Math.max(1, Math.ceil((deadline - Date.now()) / 86400000));
       }
 
+      const totalSyllabus = (appState.syllabus && appState.syllabus.length > 0) ? appState.syllabus.length : 79;
       let completedCount = 0;
       let inProgressCount = 0;
 
-      appState.syllabus.forEach(s => {
-        if (s.status === 'completed') completedCount++;
-        else if (s.status === 'in-progress') inProgressCount++;
-      });
+      if (appState.syllabus) {
+        appState.syllabus.forEach(s => {
+          if (s.status === 'completed') completedCount++;
+          else if (s.status === 'in-progress') inProgressCount++;
+        });
+      }
 
       const effectiveDone = completedCount + (0.5 * inProgressCount);
-      const remainingWorkload = Math.max(0, 79 - effectiveDone);
-      const daysPerChapter = remainingWorkload > 0 ? (daysLeft / remainingWorkload) : 999;
-      const rateChaptersPerDay = daysLeft > 0 ? (remainingWorkload / daysLeft) : 0;
+      const remainingWorkload = Math.max(0, totalSyllabus - effectiveDone);
+      const daysPerUnit = remainingWorkload > 0 ? (daysLeft / remainingWorkload) : 999;
+      const rateUnitsPerDay = daysLeft > 0 ? (remainingWorkload / daysLeft) : 0;
 
       const bannerTextEl = document.getElementById('dynamicPacingTelemetryText');
       const breakdownPillEl = document.getElementById('pacingBreakdownPill');
+      const unitTerm = (appState.profile && appState.profile.category === 'college') ? 'units' : 'ch';
 
       if (bannerTextEl) {
         if (remainingWorkload <= 0) {
-          bannerTextEl.innerHTML = `<span class="text-emerald-400 font-black">🎉 79/79 COMPLETE!</span> <span class="text-zinc-300">All NEET UG Chapters Mastered. Full Revision Mode Active!</span>`;
+          bannerTextEl.innerHTML = `<span class="text-emerald-400 font-black">🎉 ${totalSyllabus}/${totalSyllabus} COMPLETE!</span> <span class="text-zinc-300">All ${unitTerm === 'units' ? 'Course Units' : 'Chapters'} Mastered. Full Revision Mode Active!</span>`;
         } else {
           bannerTextEl.innerHTML = `
-            <span>🎯 <strong class="text-cyan-300 tabular-nums">${remainingWorkload.toFixed(1)}/79 Left</strong></span>
+            <span>🎯 <strong class="text-cyan-300 tabular-nums">${remainingWorkload.toFixed(1)}/${totalSyllabus} Left</strong></span>
             <span class="text-zinc-400 mx-1.5">•</span>
-            <span>1 ch every <strong class="text-amber-300 tabular-nums">${daysPerChapter.toFixed(1)}d</strong></span>
+            <span>1 ${unitTerm === 'units' ? 'unit' : 'ch'} every <strong class="text-amber-300 tabular-nums">${daysPerUnit.toFixed(1)}d</strong></span>
             <span class="text-zinc-400 mx-1.5">•</span>
-            <span><strong class="text-white tabular-nums">${daysLeft}d</strong> to Deadline</span>
+            <span><strong class="text-white tabular-nums">${daysLeft}d</strong> to Target</span>
           `;
         }
       }
@@ -1911,22 +2875,22 @@
       const inProgTextEl = document.getElementById('syllabusInProgressCountText');
       const unstartTextEl = document.getElementById('syllabusUnstartedCountText');
 
-      const pctMastered = Math.round((completedCount / 79) * 100);
-      if (masteryRatioEl) masteryRatioEl.innerText = `${completedCount}/79 (${pctMastered}%)`;
+      const pctMastered = Math.round((completedCount / totalSyllabus) * 100);
+      if (masteryRatioEl) masteryRatioEl.innerText = `${completedCount}/${totalSyllabus} (${pctMastered}%)`;
       if (masteryBarEl) masteryBarEl.style.width = `${pctMastered}%`;
       if (doneTextEl) doneTextEl.innerText = completedCount;
       if (inProgTextEl) inProgTextEl.innerText = inProgressCount;
-      if (unstartTextEl) unstartTextEl.innerText = 79 - (completedCount + inProgressCount);
+      if (unstartTextEl) unstartTextEl.innerText = totalSyllabus - (completedCount + inProgressCount);
 
       const prevDays = document.getElementById('previewDaysRemaining');
       const prevPacing = document.getElementById('previewPacingRate');
       if (prevDays) prevDays.innerText = `${daysLeft} days remaining`;
-      if (prevPacing) prevPacing.innerText = `1 ch every ${daysPerChapter.toFixed(1)} days (${rateChaptersPerDay.toFixed(2)} ch/day)`;
+      if (prevPacing) prevPacing.innerText = `1 ${unitTerm === 'units' ? 'unit' : 'ch'} every ${daysPerUnit.toFixed(1)} days (${rateUnitsPerDay.toFixed(2)} / day)`;
     }
 
     function openSyllabusDeadlineModal() {
       playTactileFeedback('click');
-      const deadline = appState.syllabusDeadline || (Date.now() + 150 * 86400000);
+      const deadline = appState.syllabusDeadline || (Date.now() + 120 * 86400000);
       const d = new Date(deadline);
       const dateStr = d.toISOString().split('T')[0];
       const picker = document.getElementById('customDeadlineDatePicker');
@@ -1959,13 +2923,55 @@
     }
 
     /* =========================================================================
-       4. WORKLOAD MATRIX (D0 to D6 Tabs, 1 Day at a Time) & Drag & Drop
+       7. WORKLOAD MATRIX & FLEXIBLE ROUTINES (Dynamic Multi-Select Subject Chips)
        ========================================================================= */
     let activeMatrixDay = 0; // 0 = D0 (Today), 1 = D1, ..., 6 = D6
     let showAllDaysGrid = false;
 
     const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+    function getProfileSubjects() {
+      if (appState.profile && Array.isArray(appState.profile.subjects) && appState.profile.subjects.length > 0) {
+        return appState.profile.subjects;
+      }
+      return ['Physics', 'Chemistry', 'Botany', 'Zoology'];
+    }
+
+    function getSelectedDaySubjects(dayOffset) {
+      if (!appState.dailyRoutines) appState.dailyRoutines = {};
+      if (!appState.dailyRoutines[dayOffset] || appState.dailyRoutines[dayOffset].length === 0) {
+        const allSubs = getProfileSubjects();
+        if (allSubs.length <= 2) {
+          appState.dailyRoutines[dayOffset] = [...allSubs];
+        } else {
+          if (dayOffset % 2 === 0) {
+            appState.dailyRoutines[dayOffset] = [allSubs[0], allSubs[allSubs.length - 1] || allSubs[1]];
+          } else {
+            appState.dailyRoutines[dayOffset] = [allSubs[1], allSubs[2] || allSubs[0]];
+          }
+        }
+      }
+      return appState.dailyRoutines[dayOffset];
+    }
+
+    function toggleDaySubjectChip(dayOffset, subject) {
+      playTactileFeedback('click');
+      if (!appState.dailyRoutines) appState.dailyRoutines = {};
+      let current = [...getSelectedDaySubjects(dayOffset)];
+      if (current.includes(subject)) {
+        if (current.length === 1) {
+          // Keep at least 1 subject selected for the routine
+          return;
+        }
+        current = current.filter(s => s !== subject);
+      } else {
+        current.push(subject);
+      }
+      appState.dailyRoutines[dayOffset] = current;
+      saveState();
+      renderWorkloadMatrix();
+    }
 
     function getFormattedDayInfo(offset) {
       const d = new Date();
@@ -1978,18 +2984,29 @@
       if (offset === 0) label = 'D0 • Today';
       else if (offset === 1) label = 'D1 • Tomorrow';
 
-      // Alternating tracks: Even days = Track A, Odd days = Track B
-      const isTrackA = (offset % 2 === 0);
-      const trackBadge = isTrackA ? 'Track A: Physics + Zoology' : 'Track B: Chemistry + Botany';
-      const trackClass = isTrackA ? 'text-cyan-300 bg-cyan-950/40 border-cyan-800/40' : 'text-purple-300 bg-purple-950/40 border-purple-800/40';
+      const selectedSubs = getSelectedDaySubjects(offset);
+      let routineBadge = '';
+      let routineClass = 'text-cyan-300 bg-cyan-950/40 border-cyan-800/40';
+
+      if (selectedSubs.length === 1) {
+        routineBadge = `🎯 Deep Dive: ${selectedSubs[0]}`;
+        routineClass = 'text-emerald-300 bg-emerald-950/40 border-emerald-800/40';
+      } else if (selectedSubs.length === 2) {
+        routineBadge = `⚡ Dual Focus: ${selectedSubs.join(' + ')}`;
+        routineClass = 'text-cyan-300 bg-cyan-950/40 border-cyan-800/40';
+      } else {
+        routineBadge = `🔥 Multi-Subject Sprint (${selectedSubs.length} Subs): ${selectedSubs.map(s => s.slice(0, 3)).join('+')}`;
+        routineClass = 'text-purple-300 bg-purple-950/40 border-purple-800/40';
+      }
 
       return {
         offset,
         label,
         dayName,
         dateFormatted: `${dayName}, ${monthName} ${dayDate}`,
-        trackBadge,
-        trackClass
+        selectedSubs,
+        routineBadge,
+        routineClass
       };
     }
 
@@ -2057,6 +3074,7 @@
     function renderWorkloadMatrix() {
       let weeklyMinutes = 0;
       const dayTotals = [];
+      const allSubjects = getProfileSubjects();
 
       for (let day = 0; day <= 6; day++) {
         const dayTasks = appState.tasks.filter(t => t.dayOffset === day);
@@ -2090,6 +3108,8 @@
               : 'bg-white/5 border-white/10 text-zinc-400 hover:text-white hover:border-white/20'
           }`;
 
+          const subsTag = info.selectedSubs.map(s => s.slice(0, 3)).join('+');
+
           tabBtn.innerHTML = `
             <div class="flex items-center justify-center gap-1">
               <span class="text-xs font-black">${day === 0 ? 'D0' : 'D' + day}</span>
@@ -2101,12 +3121,15 @@
             <div class="text-[9px] font-mono mt-0.5 tabular-nums ${isOverloaded ? 'text-amber-400 font-bold' : isSelected ? 'text-cyan-300' : 'text-zinc-400'}">
               ${tasks.length}t • ${Math.round(totalMinutes/60*10)/10}h
             </div>
+            <div class="text-[8px] text-zinc-400 truncate mt-0.5 font-bold uppercase tracking-tighter">
+              ${subsTag}
+            </div>
           `;
           tabsContainer.appendChild(tabBtn);
         });
       }
 
-      // 2. Render Single Selected Day Card (Eliminates Endless Vertical Scroll!)
+      // 2. Render Single Selected Day Card (with Dynamic Multi-Select Subject Chips)
       const singleContainer = document.getElementById('matrixSingleDayContainer');
       if (singleContainer) {
         const currentData = dayTotals[activeMatrixDay] || { day: activeMatrixDay, tasks: [], totalMinutes: 0 };
@@ -2152,9 +3175,6 @@
                     </span>
                     ${activeMatrixDay === 0 ? '<span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>' : ''}
                   </div>
-                  <div class="text-[11px] px-2 py-0.5 rounded-md border font-semibold inline-block mt-1 ${info.trackClass}">
-                    ${info.trackBadge}
-                  </div>
                 </div>
                 <button onclick="selectMatrixDay(${Math.min(6, activeMatrixDay + 1)})" ${activeMatrixDay === 6 ? 'disabled class="opacity-30 cursor-not-allowed"' : 'class="spring-press hover:text-cyan-300"'} title="Next Day">
                   ▶
@@ -2171,16 +3191,60 @@
               </div>
             </div>
 
+            <!-- Dynamic Multi-Select Subject Chips Section -->
+            <div class="mt-2.5 p-3 rounded-2xl liquid-panel-subtle border border-white/10">
+              <div class="flex items-center justify-between flex-wrap gap-2 mb-2">
+                <div class="flex items-center gap-2">
+                  <span class="text-[11px] font-bold text-zinc-300 uppercase tracking-wider">Focus Routine:</span>
+                  <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border ${info.routineClass}">
+                    ${info.routineBadge}
+                  </span>
+                </div>
+                <span class="text-[10px] text-zinc-400">Tap chips to toggle 1-subject deep dive or multi-subject sprint</span>
+              </div>
+
+              <div class="flex items-center gap-1.5 flex-wrap">
+                ${allSubjects.map(sub => {
+                  const isSelected = info.selectedSubs.includes(sub);
+                  return `
+                    <button onclick="toggleDaySubjectChip(${activeMatrixDay}, '${sub}')" 
+                            title="${isSelected ? 'Active for this day (tap to remove)' : 'Tap to add to this day'}"
+                            class="spring-press px-2.5 py-1 rounded-xl text-xs font-bold transition-all border flex items-center gap-1.5 ${
+                              isSelected 
+                                ? 'bg-cyan-500/20 text-cyan-200 border-cyan-400/80 shadow-[0_0_12px_rgba(6,182,212,0.3)]' 
+                                : 'bg-white/5 text-zinc-400 border-white/10 hover:border-white/25 hover:text-white'
+                            }">
+                      <span>${isSelected ? '✓' : '+'}</span>
+                      <span>${sub}</span>
+                    </button>
+                  `;
+                }).join('')}
+              </div>
+            </div>
+
             <!-- Tasks Container for This Day -->
             <div class="space-y-2 mt-3 min-h-[160px]" id="dayTasks_${activeMatrixDay}">
               <!-- Injected below -->
             </div>
 
             <!-- Bottom Action Row -->
-            <div class="pt-3 mt-3 border-t border-white/10 flex items-center justify-between gap-2">
-              <button onclick="openAddTaskModal(${activeMatrixDay})" class="spring-press px-4 py-2 rounded-xl bg-cyan-500/20 text-cyan-300 border border-cyan-400/50 hover:bg-cyan-500/30 text-xs font-bold flex items-center gap-1.5">
-                <span>+</span><span>Add Task to ${activeMatrixDay === 0 ? 'Today' : 'D' + activeMatrixDay}</span>
-              </button>
+            <div class="pt-3 mt-3 border-t border-white/10 flex items-center justify-between gap-2 flex-wrap">
+              <div class="flex items-center gap-2 flex-wrap">
+                <button onclick="openAddTaskModal(${activeMatrixDay})" class="spring-press px-3.5 py-2 rounded-xl bg-cyan-500/20 text-cyan-300 border border-cyan-400/50 hover:bg-cyan-500/30 text-xs font-bold flex items-center gap-1.5">
+                  <span>+</span><span>Add Task to ${activeMatrixDay === 0 ? 'Today' : 'D' + activeMatrixDay}</span>
+                </button>
+
+                <!-- Quick add 1-tap buttons tagged with day's active chips -->
+                <div class="flex items-center gap-1 flex-wrap">
+                  ${info.selectedSubs.map(sub => `
+                    <button onclick="quickAddSubjectTask(${activeMatrixDay}, '${sub}')" 
+                            title="Quick add 45m practice task tagged with ${sub}"
+                            class="spring-press px-2 py-1 rounded-lg bg-white/5 hover:bg-white/15 text-zinc-300 hover:text-cyan-300 border border-white/10 text-[10px] font-semibold flex items-center gap-1">
+                      <span>+45m</span><span>${sub}</span>
+                    </button>
+                  `).join('')}
+                </div>
+              </div>
 
               <button onclick="moveAllDayTasksToTomorrow(${activeMatrixDay})" class="spring-press text-zinc-400 hover:text-white text-xs font-medium">
                 Push Uncompleted to Tomorrow ➔
@@ -2260,6 +3324,7 @@
                 <span>${info.label}</span>
                 <span class="tabular-nums text-zinc-400 text-[10px]">${Math.floor(totalMinutes/60)}h ${totalMinutes%60}m</span>
               </div>
+              <div class="text-[9px] text-cyan-300 uppercase font-mono font-bold mt-1">${info.selectedSubs.join('+')}</div>
               <div class="space-y-1.5 mt-2">
                 ${tasks.map(t => `<div class="text-[11px] p-1.5 rounded bg-white/5 truncate ${t.completed ? 'line-through text-zinc-500' : 'text-zinc-200'}">${t.title}</div>`).join('')}
               </div>
@@ -2268,6 +3333,26 @@
           });
         }
       }
+    }
+
+    function quickAddSubjectTask(dayOffset, subject) {
+      playTactileFeedback('chime');
+      const chapters = getChaptersForSubject(subject);
+      const sampleChapter = (chapters && chapters.length > 0) ? chapters[0] : `${subject} Focus Unit`;
+      const newTask = {
+        id: 't_' + Date.now(),
+        title: `${sampleChapter} (Practice & Active Recall)`,
+        subject: subject,
+        type: 'PRACTICE',
+        durationMinutes: 45,
+        dayOffset: dayOffset,
+        completed: false,
+        createdAt: Date.now()
+      };
+      appState.tasks.push(newTask);
+      saveState();
+      renderWorkloadMatrix();
+      renderRatioEnforcement();
     }
 
     function toggleTaskCompletion(id) {
@@ -2310,7 +3395,6 @@
       renderRatioEnforcement();
     }
 
-    // Dynamic Waterfall Algorithm (Redistributes uncompleted tasks without breaching 8h30m)
     function runDynamicWaterfall() {
       playTactileFeedback('chime');
       const uncompleted = appState.tasks.filter(t => !t.completed);
@@ -2319,7 +3403,6 @@
         return;
       }
 
-      // Clear non-completed tasks day offsets
       const completed = appState.tasks.filter(t => t.completed);
       const dayMinutes = [0, 0, 0, 0, 0, 0, 0];
       completed.forEach(t => {
@@ -2349,7 +3432,7 @@
     }
 
     /* =========================================================================
-       5. FOCUS ENGINE & STOPWATCH
+       8. FOCUS ENGINE & STOPWATCH
        ========================================================================= */
     let timerInterval = null;
     let wakeLock = null;
@@ -2401,102 +3484,73 @@
       if (appState.timer.running) {
         if (playIcon) playIcon.classList.add('hidden');
         if (pauseIcon) pauseIcon.classList.remove('hidden');
-        if (startText) startText.innerText = 'PAUSE';
+        if (startText) startText.innerText = 'Pause Session';
         if (startIcon) startIcon.innerText = '⏸';
       } else {
         if (playIcon) playIcon.classList.remove('hidden');
         if (pauseIcon) pauseIcon.classList.add('hidden');
-        if (startText) startText.innerText = 'START FOCUS';
+        if (startText) startText.innerText = appState.timer.seconds > 0 ? 'Resume Focus' : 'Start Focus';
         if (startIcon) startIcon.innerText = '▶';
       }
     }
 
     function toggleOmniTimer() {
       playTactileFeedback('click');
-      appState.timer.running = !appState.timer.running;
-
       if (appState.timer.running) {
+        // Pause
+        clearInterval(timerInterval);
+        appState.timer.running = false;
+        releaseWakeLock();
+      } else {
+        // Start
+        appState.timer.running = true;
         requestWakeLock();
         timerInterval = setInterval(() => {
-          if (appState.timer.mode === 'stopwatch') {
-            appState.timer.seconds++;
-          } else {
-            if (appState.timer.seconds > 0) {
-              appState.timer.seconds--;
-            } else {
-              // Timer completed
-              toggleOmniTimer();
-              playTactileFeedback('alert');
-              alert('🔔 Timer block completed!');
-            }
-          }
+          appState.timer.seconds++;
           updateTimerDisplays();
-          saveState();
+          if (appState.timer.seconds % 60 === 0) saveState();
         }, 1000);
-      } else {
-        releaseWakeLock();
-        clearInterval(timerInterval);
       }
-      updateTimerDisplays();
       saveState();
+      updateTimerDisplays();
     }
 
     function resetOmniTimer() {
       playTactileFeedback('click');
-      if (appState.timer.running) toggleOmniTimer();
-      if (appState.timer.mode === 'stopwatch') {
-        appState.timer.seconds = 0;
-      } else {
-        appState.timer.seconds = appState.timer.targetSeconds || 1500;
-      }
-      updateTimerDisplays();
+      clearInterval(timerInterval);
+      appState.timer.running = false;
+      appState.timer.seconds = 0;
+      releaseWakeLock();
       saveState();
+      updateTimerDisplays();
     }
 
     function setTimerMode(mode) {
       playTactileFeedback('click');
-      if (appState.timer.running) toggleOmniTimer();
       appState.timer.mode = mode;
+      resetOmniTimer();
 
-      ['modeBtnStopwatch', 'modeBtnPomo25', 'modeBtnPomo50', 'modeBtnTest200'].forEach(id => {
-        const btn = document.getElementById(id);
+      ['Stopwatch', 'Pomo25', 'Pomo50', 'Test200'].forEach(m => {
+        const btn = document.getElementById(`modeBtn${m}`);
         if (btn) btn.className = 'spring-press px-2 py-1 rounded-lg font-bold text-zinc-400 hover:text-white text-[11px]';
       });
 
-      if (mode === 'stopwatch') {
-        appState.timer.seconds = 0;
-        const b = document.getElementById('modeBtnStopwatch');
-        if (b) b.className = 'spring-press px-2 py-1 rounded-lg font-bold bg-white/20 text-white text-[11px]';
-      } else if (mode === 'pomo25') {
-        appState.timer.targetSeconds = 1500;
-        appState.timer.seconds = 1500;
-        const b = document.getElementById('modeBtnPomo25');
-        if (b) b.className = 'spring-press px-2 py-1 rounded-lg font-bold bg-white/20 text-white text-[11px]';
-      } else if (mode === 'pomo50') {
-        appState.timer.targetSeconds = 3000;
-        appState.timer.seconds = 3000;
-        const b = document.getElementById('modeBtnPomo50');
-        if (b) b.className = 'spring-press px-2 py-1 rounded-lg font-bold bg-white/20 text-white text-[11px]';
-      } else if (mode === 'test200') {
-        appState.timer.targetSeconds = 12000; // 3h 20m
-        appState.timer.seconds = 12000;
-        const b = document.getElementById('modeBtnTest200');
-        if (b) b.className = 'spring-press px-2 py-1 rounded-lg font-black text-amber-300 bg-amber-500/20 border border-amber-400/40 text-[11px]';
+      const activeBtn = document.getElementById(`modeBtn${mode === 'stopwatch' ? 'Stopwatch' : mode === 'pomo25' ? 'Pomo25' : mode === 'pomo50' ? 'Pomo50' : 'Test200'}`);
+      if (activeBtn) {
+        activeBtn.className = 'spring-press px-2 py-1 rounded-lg font-bold bg-white/20 text-white text-[11px]';
       }
 
-      updateTimerDisplays();
-      saveState();
+      if (mode === 'pomo25') appState.timer.targetSeconds = 1500;
+      else if (mode === 'pomo50') appState.timer.targetSeconds = 3000;
+      else if (mode === 'test200') appState.timer.targetSeconds = 12000;
+      else appState.timer.targetSeconds = 0;
     }
 
     function logCurrentTimerSession() {
       playTactileFeedback('chime');
-      const secs = appState.timer.mode === 'stopwatch' 
-        ? appState.timer.seconds 
-        : (appState.timer.targetSeconds - appState.timer.seconds);
-
-      const mins = Math.max(5, Math.round(secs / 60));
+      const mins = Math.max(1, Math.round(appState.timer.seconds / 60));
       const sessionType = document.getElementById('timerSessionType')?.value || 'PRACTICE';
-      const subject = document.getElementById('timerSessionSubject')?.value || 'Physics';
+      const subject = document.getElementById('timerSessionSubject')?.value || getProfileSubjects()[0];
 
       const newTask = {
         id: 't_log_' + Date.now(),
@@ -2504,7 +3558,7 @@
         subject: subject,
         type: sessionType,
         durationMinutes: mins,
-        dayOffset: 0, // D0 Today
+        dayOffset: 0,
         completed: true,
         createdAt: Date.now()
       };
@@ -2519,16 +3573,14 @@
     }
 
     /* =========================================================================
-       6. LECTURE VS PRACTICE RATIO ENGINE
+       9. LECTURE VS PRACTICE RATIO ENGINE
        ========================================================================= */
     function calculateRatioStats() {
-      // Today (D0)
       const todayTasks = appState.tasks.filter(t => t.dayOffset === 0 && t.completed);
       const todayLec = todayTasks.filter(t => t.type === 'LECTURE').reduce((a, b) => a + b.durationMinutes, 0);
       const todayPrac = todayTasks.filter(t => t.type === 'PRACTICE').reduce((a, b) => a + b.durationMinutes, 0);
       const todayRatio = todayLec > 0 ? (todayPrac / todayLec) : (todayPrac > 0 ? 9.99 : 0);
 
-      // Rolling 7-Day
       const weekTasks = appState.tasks.filter(t => t.completed);
       const weekLec = weekTasks.filter(t => t.type === 'LECTURE').reduce((a, b) => a + b.durationMinutes, 0);
       const weekPrac = weekTasks.filter(t => t.type === 'PRACTICE').reduce((a, b) => a + b.durationMinutes, 0);
@@ -2540,7 +3592,6 @@
     function renderRatioEnforcement() {
       const { todayLec, todayPrac, todayRatio, weekLec, weekPrac, weekRatio } = calculateRatioStats();
 
-      // Top bar live ratio badge
       const liveRatioEl = document.getElementById('liveRatioValue');
       const liveDotEl = document.getElementById('liveRatioStatusDot');
       const ratioDisplay = todayRatio >= 9.99 ? 'MAX' : todayRatio.toFixed(2) + 'x';
@@ -2550,20 +3601,17 @@
         liveDotEl.className = `w-1.5 h-1.5 rounded-full ${todayRatio >= 0.50 ? 'bg-emerald-400' : 'bg-rose-500 animate-ping'}`;
       }
 
-      // Deck Ratio Card
       const deckValEl = document.getElementById('ratioCardValue');
       if (deckValEl) {
         deckValEl.innerText = ratioDisplay;
         deckValEl.className = `tabular-nums font-black text-xl ${todayRatio >= 0.50 ? 'text-emerald-400' : 'text-rose-400'}`;
       }
 
-      // Hours breakdown
       const tLecText = document.getElementById('todayLectureHoursText');
       const tPracText = document.getElementById('todayPracticeHoursText');
       if (tLecText) tLecText.innerText = `${Math.floor(todayLec/60)}h ${todayLec%60}m`;
       if (tPracText) tPracText.innerText = `${Math.floor(todayPrac/60)}h ${todayPrac%60}m`;
 
-      // Dual progress bar
       const totalToday = todayLec + todayPrac;
       const lecBar = document.getElementById('ratioLectureBar');
       const pracBar = document.getElementById('ratioPracticeBar');
@@ -2577,7 +3625,6 @@
         if (pracBar) pracBar.style.width = '50%';
       }
 
-      // 7-Day Metrics
       const wLecText = document.getElementById('weekLectureTotal');
       const wPracText = document.getElementById('weekPracticeTotal');
       const wNetText = document.getElementById('weekNetRatio');
@@ -2585,7 +3632,6 @@
       if (wPracText) wPracText.innerText = `${Math.floor(weekPrac/60)}h ${weekPrac%60}m`;
       if (wNetText) wNetText.innerText = weekRatio >= 9.99 ? 'MAX' : weekRatio.toFixed(2) + 'x';
 
-      // Alert Banner
       const alertBanner = document.getElementById('ratioAlertBanner');
       const bannerText = document.getElementById('bannerRatioText');
       if (todayLec > 60 && todayRatio < 0.50) {
@@ -2598,10 +3644,11 @@
 
     function addEmergencyPracticeBlock() {
       playTactileFeedback('chime');
+      const subjects = getProfileSubjects();
       const newTask = {
         id: 't_emerg_' + Date.now(),
         title: 'Emergency 45m DPP Active Recall Set',
-        subject: 'Physics',
+        subject: subjects[0] || 'Physics',
         type: 'PRACTICE',
         durationMinutes: 45,
         dayOffset: 0,
@@ -2622,17 +3669,14 @@
     }
 
     /* =========================================================================
-       7. MARATHON ONE-SHOT SPLITTER ENGINE
+       10. MARATHON ONE-SHOT SPLITTER ENGINE
        ========================================================================= */
     let generatedMarathonQuotas = [];
 
     function loadSampleMarathon() {
       playTactileFeedback('click');
-      document.getElementById('marathonUrl').value = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
-      document.getElementById('marathonHours').value = '9';
-      document.getElementById('marathonMins').value = '15';
-      document.getElementById('marathonSpeed').value = '1.5';
-      document.getElementById('marathonDays').value = '3';
+      const urlInput = document.getElementById('marathonUrl');
+      if (urlInput) urlInput.value = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
       calculateMarathonSplits();
     }
 
@@ -2644,41 +3688,29 @@
 
     function calculateMarathonSplits() {
       const url = document.getElementById('marathonUrl')?.value || '';
-      const hrs = parseInt(document.getElementById('marathonHours')?.value || '0', 10);
-      const mins = parseInt(document.getElementById('marathonMins')?.value || '0', 10);
-      const speed = parseFloat(document.getElementById('marathonSpeed')?.value || '1.0');
+      const hrs = parseInt(document.getElementById('marathonHours')?.value || '9', 10);
+      const mins = parseInt(document.getElementById('marathonMins')?.value || '15', 10);
+      const speed = parseFloat(document.getElementById('marathonSpeed')?.value || '1.5');
       const days = parseInt(document.getElementById('marathonDays')?.value || '3', 10);
 
       const totalRawMinutes = (hrs * 60) + mins;
       const effectiveMinutes = Math.round(totalRawMinutes / speed);
-
-      const sumOrig = document.getElementById('summaryOriginalTime');
-      const sumSpeed = document.getElementById('summarySpeed');
-      const sumEff = document.getElementById('summaryEffectiveTime');
-      if (sumOrig) sumOrig.innerText = `${hrs}h ${mins}m`;
-      if (sumSpeed) sumSpeed.innerText = `${speed.toFixed(2)}x`;
-      if (sumEff) sumEff.innerText = `${Math.floor(effectiveMinutes/60)}h ${effectiveMinutes%60}m`;
-
-      const videoId = parseYouTubeId(url) || 'sample';
-      const baseUrl = videoId !== 'sample' ? `https://www.youtube.com/watch?v=${videoId}` : '#';
+      const dailyMinutes = Math.round(effectiveMinutes / Math.max(1, days));
 
       generatedMarathonQuotas = [];
-      const rawChunkMinutes = Math.floor(totalRawMinutes / days);
-      const effectiveChunkMinutes = Math.floor(effectiveMinutes / days);
+      const ytId = parseYouTubeId(url);
 
       for (let i = 0; i < days; i++) {
-        const startSec = i * rawChunkMinutes * 60;
-        const endSec = (i === days - 1) ? totalRawMinutes * 60 : (i + 1) * rawChunkMinutes * 60;
-        const link = baseUrl !== '#' ? `${baseUrl}&t=${startSec}s` : '#';
-
+        const startMin = Math.round(i * (totalRawMinutes / days));
+        const endMin = Math.round((i + 1) * (totalRawMinutes / days));
         generatedMarathonQuotas.push({
           dayIndex: i,
-          title: `Marathon Part ${i + 1}/${days}`,
-          rawMins: rawChunkMinutes,
-          effectiveMins: effectiveChunkMinutes,
-          startSec,
-          endSec,
-          url: link
+          targetMinutes: dailyMinutes,
+          effectiveMinutes: dailyMinutes,
+          rawStart: `${Math.floor(startMin/60)}h ${startMin%60}m`,
+          rawEnd: `${Math.floor(endMin/60)}h ${endMin%60}m`,
+          ytId: ytId,
+          startSec: startMin * 60
         });
       }
 
@@ -2686,96 +3718,147 @@
     }
 
     function renderMarathonQuotas() {
-      const container = document.getElementById('marathonQuotasContainer');
-      const pushBtn = document.getElementById('pushMarathonToMatrixBtn');
+      const container = document.getElementById('marathonSplitsContainer');
       if (!container) return;
       container.innerHTML = '';
 
       if (generatedMarathonQuotas.length === 0) {
-        if (pushBtn) pushBtn.classList.add('hidden');
+        container.innerHTML = `<div class="text-xs text-zinc-500 italic py-6 text-center">Configure marathon duration above and click Split Marathon.</div>`;
         return;
       }
 
-      if (pushBtn) pushBtn.classList.remove('hidden');
-
-      generatedMarathonQuotas.forEach(q => {
-        const card = document.createElement('div');
-        card.className = "liquid-panel-subtle p-3 rounded-2xl border border-white/10 hover:border-purple-400/40 transition-colors";
-        card.innerHTML = `
-          <div class="flex items-center justify-between text-xs mb-1.5">
-            <span class="font-bold text-white">${q.title}</span>
-            <span class="tabular-nums font-mono text-[10px] text-purple-300 font-bold bg-purple-500/20 px-2 py-0.5 rounded border border-purple-500/30">
-              ${q.effectiveMins}m Watch
-            </span>
+      generatedMarathonQuotas.forEach(quota => {
+        const item = document.createElement('div');
+        item.className = 'liquid-panel-subtle p-3 rounded-2xl border border-white/10 flex items-center justify-between gap-2';
+        item.innerHTML = `
+          <div>
+            <div class="text-xs font-bold text-white">Part ${quota.dayIndex + 1}: ${quota.rawStart} ➔ ${quota.rawEnd}</div>
+            <div class="text-[10px] text-zinc-400 mt-0.5">Quota: ${quota.effectiveMinutes}m at speed • Day D${quota.dayIndex}</div>
           </div>
-          <div class="text-[10px] text-zinc-400 flex items-center justify-between mb-2">
-            <span>Timestamp: ${Math.floor(q.startSec/60)}m ➔ ${Math.floor(q.endSec/60)}m</span>
-            ${q.url !== '#' ? `<a href="${q.url}" target="_blank" class="text-cyan-400 underline font-mono text-[9px]">Open YT ↗</a>` : ''}
-          </div>
-          <button onclick="addSingleMarathonSplitToDay(${q.dayIndex}, ${q.effectiveMins})" class="spring-press w-full py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-[11px] border border-white/10">
-            + Add to D${q.dayIndex}
+          <button onclick="addSingleMarathonSplitToDay(${quota.dayIndex}, ${quota.dayIndex})" class="spring-press px-2.5 py-1 rounded-xl bg-purple-500/20 text-purple-300 border border-purple-400/40 text-[10px] font-bold">
+            + Schedule D${quota.dayIndex}
           </button>
         `;
-        container.appendChild(card);
+        container.appendChild(item);
       });
     }
 
-    function addSingleMarathonSplitToDay(dayOffset, minutes) {
+    function addSingleMarathonSplitToDay(splitIndex, dayOffset) {
       playTactileFeedback('chime');
-      const newTask = {
-        id: 't_mara_' + Date.now() + '_' + dayOffset,
-        title: `Marathon Quota (${minutes}m)`,
-        subject: 'Chemistry',
+      const quota = generatedMarathonQuotas[splitIndex];
+      if (!quota) return;
+
+      const subjects = getProfileSubjects();
+      const task = {
+        id: 't_split_' + Date.now(),
+        title: `Marathon Part ${quota.dayIndex + 1} (${quota.rawStart} ➔ ${quota.rawEnd})`,
+        subject: subjects[0] || 'Physics',
         type: 'LECTURE',
-        durationMinutes: minutes,
-        dayOffset: dayOffset,
+        durationMinutes: quota.effectiveMinutes,
+        dayOffset: Math.min(6, dayOffset),
         completed: false,
         createdAt: Date.now()
       };
-      appState.tasks.push(newTask);
+
+      appState.tasks.push(task);
       saveState();
       renderWorkloadMatrix();
       renderRatioEnforcement();
-      alert(`🎬 Added marathon quota to D${dayOffset} matrix.`);
+      alert(`✅ Marathon Part ${quota.dayIndex + 1} scheduled in D${dayOffset} Workload Matrix.`);
     }
 
     function pushMarathonSplitsToMatrix() {
       playTactileFeedback('chime');
-      generatedMarathonQuotas.forEach(q => {
-        const newTask = {
-          id: 't_mara_' + Date.now() + '_' + q.dayIndex,
-          title: `Marathon Part ${q.dayIndex + 1} (${q.effectiveMins}m)`,
-          subject: 'Chemistry',
+      if (generatedMarathonQuotas.length === 0) calculateMarathonSplits();
+      const subjects = getProfileSubjects();
+
+      generatedMarathonQuotas.forEach(quota => {
+        const task = {
+          id: 't_split_' + Date.now() + '_' + quota.dayIndex,
+          title: `Marathon Part ${quota.dayIndex + 1} (${quota.rawStart} ➔ ${quota.rawEnd})`,
+          subject: subjects[0] || 'Physics',
           type: 'LECTURE',
-          durationMinutes: q.effectiveMins,
-          dayOffset: q.dayIndex,
+          durationMinutes: quota.effectiveMinutes,
+          dayOffset: Math.min(6, quota.dayIndex),
           completed: false,
           createdAt: Date.now()
         };
-        appState.tasks.push(newTask);
+        appState.tasks.push(task);
       });
+
       saveState();
       renderWorkloadMatrix();
       renderRatioEnforcement();
-      alert(`🎬 Pushed all ${generatedMarathonQuotas.length} marathon splits to Workload Matrix.`);
+      alert(`🚀 Successfully pushed ${generatedMarathonQuotas.length} marathon parts across your 7-Day Workload Matrix.`);
     }
 
     /* =========================================================================
-       8. 79-CHAPTER COMPLETION DATABASE (With 3-State Progress Cycle)
+       11. DYNAMIC SUBJECT DROPDOWNS & SYLLABUS DATABASE
        ========================================================================= */
-    let syllabusSearchQuery = '';
+    function updateSubjectDropdowns() {
+      const subjects = getProfileSubjects();
+
+      const selects = [
+        document.getElementById('timerSessionSubject'),
+        document.getElementById('newTaskSubject'),
+        document.getElementById('newErrorSubject'),
+        document.getElementById('newSyllabusSubject')
+      ];
+
+      selects.forEach(select => {
+        if (!select) return;
+        const currentVal = select.value;
+        select.innerHTML = '';
+        subjects.forEach(sub => {
+          const opt = document.createElement('option');
+          opt.value = sub;
+          opt.innerText = sub;
+          opt.className = 'bg-zinc-900';
+          select.appendChild(opt);
+        });
+        if (subjects.includes(currentVal)) {
+          select.value = currentVal;
+        }
+      });
+    }
+
+    function renderSyllabusSubjectFilters() {
+      const container = document.getElementById('syllabusSubjectFiltersContainer');
+      if (!container) return;
+      container.innerHTML = '';
+
+      const subjects = getProfileSubjects();
+      const totalCount = appState.syllabus ? appState.syllabus.length : 79;
+      const currentActive = appState.activeSyllabusSubject || 'ALL';
+
+      // ALL button
+      const allBtn = document.createElement('button');
+      allBtn.onclick = () => filterSyllabusBySubject('ALL');
+      allBtn.id = 'filterSubALL';
+      allBtn.className = `spring-press px-2.5 py-1 rounded-xl font-bold text-[11px] whitespace-nowrap ${
+        currentActive === 'ALL' ? 'bg-white/20 text-white' : 'liquid-panel-subtle text-zinc-400 hover:text-white'
+      }`;
+      allBtn.innerText = `All (${totalCount})`;
+      container.appendChild(allBtn);
+
+      // Subject buttons
+      subjects.forEach(sub => {
+        const subCount = appState.syllabus ? appState.syllabus.filter(c => c.subject.toLowerCase() === sub.toLowerCase()).length : 0;
+        const btn = document.createElement('button');
+        btn.onclick = () => filterSyllabusBySubject(sub);
+        btn.id = `filterSub${sub.replace(/\s+/g, '')}`;
+        btn.className = `spring-press px-2.5 py-1 rounded-xl font-medium text-[11px] whitespace-nowrap ${
+          currentActive === sub ? 'bg-white/20 text-white font-bold' : 'liquid-panel-subtle text-zinc-400 hover:text-white'
+        }`;
+        btn.innerText = `${sub} (${subCount})`;
+        container.appendChild(btn);
+      });
+    }
 
     function filterSyllabusBySubject(sub) {
       playTactileFeedback('click');
       appState.activeSyllabusSubject = sub;
-      ['ALL', 'Physics', 'Chemistry', 'Botany', 'Zoology'].forEach(s => {
-        const btn = document.getElementById(`filterSub${s}`);
-        if (btn) {
-          btn.className = (s === sub) 
-            ? 'spring-press px-2.5 py-1 rounded-xl bg-white/20 text-white font-bold text-[11px] whitespace-nowrap'
-            : 'spring-press px-2.5 py-1 rounded-xl liquid-panel-subtle text-zinc-400 hover:text-white font-medium text-[11px] whitespace-nowrap';
-        }
-      });
+      renderSyllabusSubjectFilters();
       renderSyllabusDatabase();
     }
 
@@ -2784,46 +3867,42 @@
       appState.activeSyllabusTier = tier;
       ['ALL', 'A', 'B', 'C'].forEach(t => {
         const btn = document.getElementById(`filterTier${t}`);
-        if (btn) {
-          btn.className = (t === tier)
-            ? 'spring-press px-2 py-0.5 rounded-lg bg-white/20 text-white font-bold text-[10px]'
-            : 'spring-press px-2 py-0.5 rounded-lg liquid-panel-subtle text-zinc-400 hover:text-white text-[10px]';
-        }
+        if (btn) btn.className = 'spring-press px-2 py-0.5 rounded-lg liquid-panel-subtle text-zinc-400 font-bold text-[10px]';
       });
+      const activeBtn = document.getElementById(`filterTier${tier}`);
+      if (activeBtn) activeBtn.className = 'spring-press px-2 py-0.5 rounded-lg bg-white/20 text-white font-bold text-[10px]';
       renderSyllabusDatabase();
     }
 
+    let syllabusSearchQuery = '';
     function onSyllabusSearchChange(query) {
       syllabusSearchQuery = (query || '').toLowerCase().trim();
       renderSyllabusDatabase();
     }
 
-    function cycleChapterState(chapterId) {
+    function cycleChapterState(chId) {
       playTactileFeedback('click');
-      const ch = appState.syllabus.find(s => s.id === chapterId);
+      const ch = appState.syllabus.find(c => c.id === chId);
       if (ch) {
-        if (!ch.status || ch.status === 'unstarted') {
-          ch.status = 'in-progress';
-        } else if (ch.status === 'in-progress') {
-          ch.status = 'completed';
-        } else {
-          ch.status = 'unstarted';
-        }
+        if (ch.status === 'unstarted') ch.status = 'in-progress';
+        else if (ch.status === 'in-progress') ch.status = 'completed';
+        else ch.status = 'unstarted';
+
         saveState();
         renderSyllabusDatabase();
-        updateDualCountdowns(); // Live dynamic pacing recalculation!
+        updateDualCountdowns();
       }
     }
 
-    function scheduleChapterDirectly(chapterName, subject) {
+    function scheduleChapterDirectly(chName, subject) {
       playTactileFeedback('chime');
       const newTask = {
-        id: 't_sched_' + Date.now(),
-        title: `${chapterName} (45m Drill)`,
-        subject: subject,
+        id: 't_ch_' + Date.now(),
+        title: `${chName} (30 MCQs & Formula Drill)`,
+        subject: subject || getProfileSubjects()[0],
         type: 'PRACTICE',
         durationMinutes: 45,
-        dayOffset: 0, // Today
+        dayOffset: 0,
         completed: false,
         createdAt: Date.now()
       };
@@ -2831,17 +3910,20 @@
       saveState();
       renderWorkloadMatrix();
       renderRatioEnforcement();
-      alert(`⚡ Added "${chapterName}" (45m Practice) directly to D0 (Today) Workload Matrix.`);
+      alert(`✅ Scheduled "${chName}" in Today's (D0) Workload Matrix.`);
     }
 
     function autoTriageAllNeetChapters() {
       playTactileFeedback('chime');
-      if (!confirm('Auto-triage all 79 official NEET UG chapters into Tier-A, Tier-B, and Tier-C based on high-yield weightage?')) return;
+      if (appState.profile && appState.profile.category === 'college') {
+        alert('Active profile is in College Degree mode. Chapters are already structured into modular course units.');
+        return;
+      }
       appState.syllabus = buildInitial79Chapters();
       saveState();
       renderSyllabusDatabase();
       updateDualCountdowns();
-      alert('⚡ Auto-Triage complete! All 79 NEET UG chapters categorized.');
+      alert('⚡ Auto-Triage complete! All 79 NEET chapters categorized.');
     }
 
     function renderSyllabusDatabase() {
@@ -2851,19 +3933,20 @@
 
       const targetSub = appState.activeSyllabusSubject || 'ALL';
       const targetTier = appState.activeSyllabusTier || 'ALL';
+      const totalCount = appState.syllabus ? appState.syllabus.length : 79;
 
-      const filtered = appState.syllabus.filter(ch => {
-        const matchSub = (targetSub === 'ALL' || ch.subject === targetSub);
+      const filtered = (appState.syllabus || []).filter(ch => {
+        const matchSub = (targetSub === 'ALL' || ch.subject.toLowerCase() === targetSub.toLowerCase());
         const matchTier = (targetTier === 'ALL' || ch.tier === targetTier);
         const matchSearch = (!syllabusSearchQuery || ch.name.toLowerCase().includes(syllabusSearchQuery));
         return matchSub && matchTier && matchSearch;
       });
 
       const footerEl = document.getElementById('syllabusDatabaseFooterCount');
-      if (footerEl) footerEl.innerText = `Showing ${filtered.length} of 79 chapters`;
+      if (footerEl) footerEl.innerText = `Showing ${filtered.length} of ${totalCount} items`;
 
       if (filtered.length === 0) {
-        container.innerHTML = `<div class="text-xs text-zinc-500 italic py-8 text-center">No chapters matched criteria.</div>`;
+        container.innerHTML = `<div class="text-xs text-zinc-500 italic py-8 text-center">No units matched criteria.</div>`;
         return;
       }
 
@@ -2885,6 +3968,7 @@
           statusStyle = 'text-amber-300 border-amber-500/40 bg-amber-500/20 font-bold';
         }
 
+
         card.innerHTML = `
           <div class="flex items-center gap-2.5 flex-1 min-w-[210px]">
             <span class="tabular-nums text-[10px] font-mono font-bold text-zinc-500 w-5 text-right">${idx + 1}.</span>
@@ -2893,7 +3977,6 @@
               <div class="flex items-center gap-2 mt-1 flex-wrap">
                 <span class="text-[10px] text-zinc-400 font-mono">${ch.subject}</span>
                 ${tierBadge}
-                <!-- 3-State Progress Cycle Button -->
                 <button onclick="cycleChapterState('${ch.id}')" title="Click to cycle: Unstarted ➔ In-Progress ➔ Mastered" 
                         class="spring-press px-2 py-0.5 rounded-full text-[10px] border ${statusStyle}">
                   ${statusBtn}
@@ -2903,7 +3986,7 @@
           </div>
 
           <div class="flex items-center gap-1.5 shrink-0">
-            <button onclick="scheduleChapterDirectly('${ch.name.replace(/'/g, "\'")}', '${ch.subject}')" 
+            <button onclick="scheduleChapterDirectly('${ch.id}')" 
                     title="Schedule 45m practice task in Today's matrix" 
                     class="spring-press px-2.5 py-1 rounded-xl bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/30 border border-cyan-400/40 text-[10px] font-bold">
               + Add to Today
@@ -2916,16 +3999,16 @@
 
     function scheduleCurrentTierOneShot() {
       playTactileFeedback('chime');
-      const unstarted = appState.syllabus.find(s => s.status !== 'completed');
+      const unstarted = (appState.syllabus || []).find(s => s.status !== 'completed');
       if (unstarted) {
         scheduleChapterDirectly(unstarted.name, unstarted.subject);
       } else {
-        alert('All 79 chapters are mastered! 🎉');
+        alert('All chapters / units are mastered! 🎉');
       }
     }
 
     /* =========================================================================
-       9. 3-BUCKET ERROR LOGGER ENGINE
+       12. 3-BUCKET ERROR LOGGER ENGINE
        ========================================================================= */
     let currentErrorFilter = 'ALL';
 
@@ -2952,13 +4035,19 @@
       const time = errs.filter(e => e.bucket === 'time').length;
       const total = errs.length;
 
-      document.getElementById('bucketConceptualCount').innerText = conc;
-      document.getElementById('bucketCalcCount').innerText = calc;
-      document.getElementById('bucketTimeCount').innerText = time;
+      const cEl = document.getElementById('bucketConceptualCount');
+      const kEl = document.getElementById('bucketCalcCount');
+      const tEl = document.getElementById('bucketTimeCount');
+      if (cEl) cEl.innerText = conc;
+      if (kEl) kEl.innerText = calc;
+      if (tEl) tEl.innerText = time;
 
-      document.getElementById('bucketConceptualPct').innerText = total > 0 ? Math.round((conc / total) * 100) + '%' : '0%';
-      document.getElementById('bucketCalcPct').innerText = total > 0 ? Math.round((calc / total) * 100) + '%' : '0%';
-      document.getElementById('bucketTimePct').innerText = total > 0 ? Math.round((time / total) * 100) + '%' : '0%';
+      const cpEl = document.getElementById('bucketConceptualPct');
+      const kpEl = document.getElementById('bucketCalcPct');
+      const tpEl = document.getElementById('bucketTimePct');
+      if (cpEl) cpEl.innerText = total > 0 ? Math.round((conc / total) * 100) + '%' : '0%';
+      if (kpEl) kpEl.innerText = total > 0 ? Math.round((calc / total) * 100) + '%' : '0%';
+      if (tpEl) tpEl.innerText = total > 0 ? Math.round((time / total) * 100) + '%' : '0%';
 
       const resolved = errs.filter(e => e.reviewed).length;
       const resText = document.getElementById('errorResolvedText');
@@ -3025,42 +4114,44 @@
     }
 
     /* =========================================================================
-       10. RAPID TRIAGE ENGINE
+       13. RAPID TRIAGE ENGINE
        ========================================================================= */
     let triageTask = null;
-    let triageSeconds = 30;
     let triageTimerInterval = null;
+    let triageSecondsLeft = 30;
 
     function triggerRapidTriageModal() {
       playTactileFeedback('click');
       const uncompleted = appState.tasks.filter(t => !t.completed);
       if (uncompleted.length === 0) {
-        alert('All tasks completed! Nothing to triage.');
+        alert('No pending tasks to triage!');
         return;
       }
 
-      triageTask = uncompleted[Math.floor(Math.random() * uncompleted.length)];
-      triageSeconds = 30;
+      triageTask = uncompleted[0];
+      const titleEl = document.getElementById('triageTaskTitle');
+      const subEl = document.getElementById('triageTaskSubject');
+      const durEl = document.getElementById('triageTaskDuration');
 
-      document.getElementById('triageTaskTitle').innerText = triageTask.title;
-      document.getElementById('triageTaskSubject').innerText = triageTask.subject;
-      document.getElementById('triageTaskDuration').innerText = `${triageTask.durationMinutes}m`;
+      if (titleEl) titleEl.innerText = triageTask.title;
+      if (subEl) subEl.innerText = triageTask.subject;
+      if (durEl) durEl.innerText = `${triageTask.durationMinutes}m`;
 
-      document.getElementById('rapidTriageModal').classList.remove('hidden');
+      triageSecondsLeft = 30;
+      const countEl = document.getElementById('triageTimerCountdown');
+      if (countEl) countEl.innerText = '30';
 
       clearInterval(triageTimerInterval);
       triageTimerInterval = setInterval(() => {
-        triageSeconds--;
-        const cnt = document.getElementById('triageTimerCountdown');
-        const bar = document.getElementById('triageProgressBar');
-        if (cnt) cnt.innerText = triageSeconds;
-        if (bar) bar.style.width = `${(triageSeconds / 30) * 100}%`;
-
-        if (triageSeconds <= 0) {
+        triageSecondsLeft--;
+        if (countEl) countEl.innerText = String(triageSecondsLeft);
+        if (triageSecondsLeft <= 0) {
           clearInterval(triageTimerInterval);
           closeRapidTriageModal();
         }
       }, 1000);
+
+      document.getElementById('rapidTriageModal').classList.remove('hidden');
     }
 
     function closeRapidTriageModal() {
@@ -3087,14 +4178,98 @@
     }
 
     /* =========================================================================
-       11. MODAL CONTROLLERS & SUBMISSIONS
+       14. ADD TASK MODAL CONTROLLER (Dynamic Tagging based on Selected Chip)
        ========================================================================= */
     function openAddTaskModal(dayOffset = 0) {
       playTactileFeedback('click');
       const daySelect = document.getElementById('newTaskDay');
       if (daySelect) daySelect.value = String(dayOffset);
-      populateTaskChapterDropdown(document.getElementById('newTaskSubject')?.value || 'Physics');
+
+      updateSubjectDropdowns();
+
+      const activeSubs = getSelectedDaySubjects(dayOffset);
+      const allSubs = getProfileSubjects();
+      const defaultSub = activeSubs[0] || allSubs[0] || 'Physics';
+
+      // Quick Chips for Active Routine
+      const container = document.getElementById('taskModalSubjectChipsContainer');
+      if (container) {
+        container.innerHTML = `
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="text-[10px] text-zinc-400 uppercase font-bold tracking-wider">Active Focus Chips (D${dayOffset}):</span>
+            <span class="text-[10px] text-cyan-400 font-mono">1-TAP TAG</span>
+          </div>
+          <div class="flex items-center gap-1.5 flex-wrap">
+            ${activeSubs.map(s => `
+              <button type="button" onclick="setTaskModalSubject('${s}')" 
+                      class="spring-press px-2.5 py-1 rounded-xl text-xs font-bold border transition-all ${
+                        s === defaultSub 
+                          ? 'bg-cyan-500/25 border-cyan-400 text-cyan-200 shadow-[0_0_12px_rgba(6,182,212,0.3)]' 
+                          : 'bg-white/5 border-white/10 text-zinc-400 hover:text-white'
+                      }">
+                ✓ ${s}
+              </button>
+            `).join('')}
+          </div>
+        `;
+      }
+
+      const subSelect = document.getElementById('newTaskSubject');
+      if (subSelect) subSelect.value = defaultSub;
+
+      populateTaskChapterDropdown(defaultSub);
       document.getElementById('addTaskModal').classList.remove('hidden');
+    }
+
+    function setTaskModalSubject(sub) {
+      playTactileFeedback('click');
+      const subSelect = document.getElementById('newTaskSubject');
+      if (subSelect) subSelect.value = sub;
+      populateTaskChapterDropdown(sub);
+
+      const container = document.getElementById('taskModalSubjectChipsContainer');
+      if (container) {
+        container.querySelectorAll('button').forEach(btn => {
+          if (btn.innerText.includes(sub)) {
+            btn.className = 'spring-press px-2.5 py-1 rounded-xl text-xs font-bold border transition-all bg-cyan-500/25 border-cyan-400 text-cyan-200 shadow-[0_0_12px_rgba(6,182,212,0.3)]';
+          } else {
+            btn.className = 'spring-press px-2.5 py-1 rounded-xl text-xs font-bold border transition-all bg-white/5 border-white/10 text-zinc-400 hover:text-white';
+          }
+        });
+      }
+    }
+
+    function onTaskModalDayChange(dayVal) {
+      const dayOffset = parseInt(dayVal, 10);
+      const activeSubs = getSelectedDaySubjects(dayOffset);
+      const allSubs = getProfileSubjects();
+      const defaultSub = activeSubs[0] || allSubs[0] || 'Physics';
+
+      const container = document.getElementById('taskModalSubjectChipsContainer');
+      if (container) {
+        container.innerHTML = `
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="text-[10px] text-zinc-400 uppercase font-bold tracking-wider">Active Focus Chips (D${dayOffset}):</span>
+            <span class="text-[10px] text-cyan-400 font-mono">1-TAP TAG</span>
+          </div>
+          <div class="flex items-center gap-1.5 flex-wrap">
+            ${activeSubs.map(s => `
+              <button type="button" onclick="setTaskModalSubject('${s}')" 
+                      class="spring-press px-2.5 py-1 rounded-xl text-xs font-bold border transition-all ${
+                        s === defaultSub 
+                          ? 'bg-cyan-500/25 border-cyan-400 text-cyan-200 shadow-[0_0_12px_rgba(6,182,212,0.3)]' 
+                          : 'bg-white/5 border-white/10 text-zinc-400 hover:text-white'
+                      }">
+                ✓ ${s}
+              </button>
+            `).join('')}
+          </div>
+        `;
+      }
+
+      const subSelect = document.getElementById('newTaskSubject');
+      if (subSelect) subSelect.value = defaultSub;
+      populateTaskChapterDropdown(defaultSub);
     }
 
     function closeAddTaskModal() {
@@ -3117,11 +4292,21 @@
 
     function onTaskSubjectChange(sub) {
       populateTaskChapterDropdown(sub);
+      const container = document.getElementById('taskModalSubjectChipsContainer');
+      if (container) {
+        container.querySelectorAll('button').forEach(btn => {
+          if (btn.innerText.includes(sub)) {
+            btn.className = 'spring-press px-2.5 py-1 rounded-xl text-xs font-bold border transition-all bg-cyan-500/25 border-cyan-400 text-cyan-200 shadow-[0_0_12px_rgba(6,182,212,0.3)]';
+          } else {
+            btn.className = 'spring-press px-2.5 py-1 rounded-xl text-xs font-bold border transition-all bg-white/5 border-white/10 text-zinc-400 hover:text-white';
+          }
+        });
+      }
     }
 
     function onTaskChapterSelect(ch) {
       const titleInput = document.getElementById('newTaskTitle');
-      if (titleInput) titleInput.value = `${ch} (30 MCQs & Formula Drill)`;
+      if (titleInput) titleInput.value = `${ch} (Active Recall & MCQs)`;
     }
 
     function saveNewTask(e) {
@@ -3151,10 +4336,13 @@
       closeAddTaskModal();
     }
 
-    // Add Error Log Modal
+    /* =========================================================================
+       15. ERROR & SYLLABUS MODALS
+       ========================================================================= */
     function openAddErrorModal() {
       playTactileFeedback('click');
-      populateErrorChapterDropdown(document.getElementById('newErrorSubject')?.value || 'Physics');
+      updateSubjectDropdowns();
+      populateErrorChapterDropdown(document.getElementById('newErrorSubject')?.value || getProfileSubjects()[0]);
       document.getElementById('addErrorModal').classList.remove('hidden');
     }
 
@@ -3208,9 +4396,9 @@
       closeAddErrorModal();
     }
 
-    // Add Syllabus Modal
     function openAddSyllabusModal() {
       playTactileFeedback('click');
+      updateSubjectDropdowns();
       document.getElementById('addSyllabusModal').classList.remove('hidden');
     }
 
@@ -3238,11 +4426,14 @@
 
       saveState();
       renderSyllabusDatabase();
+      renderSyllabusSubjectFilters();
       updateDualCountdowns();
       closeAddSyllabusModal();
     }
 
-    // Settings Modal
+    /* =========================================================================
+       16. SETTINGS MODAL & JSON BACKUP
+       ========================================================================= */
     function openBetaPassModal() {
       playTactileFeedback('click');
       document.getElementById('betaPassModal').classList.remove('hidden');
@@ -3252,13 +4443,12 @@
       document.getElementById('betaPassModal').classList.add('hidden');
     }
 
-    // JSON Export / Import
     function exportDataJSON() {
       playTactileFeedback('click');
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appState, null, 2));
       const a = document.createElement('a');
       a.setAttribute("href", dataStr);
-      a.setAttribute("download", `STUDY_COCKPIT_BACKUP_${new Date().toISOString().split('T')[0]}.json`);
+      a.setAttribute("download", `STUDY_FLOW_BACKUP_${new Date().toISOString().split('T')[0]}.json`);
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -3293,14 +4483,17 @@
     }
 
     /* =========================================================================
-       MASTER RENDER ORCHESTRATION
+       17. MASTER RENDER ORCHESTRATION
        ========================================================================= */
     function renderAll() {
+      updateGoalPillUI();
       updateDreamCollegeUI();
       updateDualCountdowns();
       renderWorkloadMatrix();
       renderRatioEnforcement();
       renderMarathonQuotas();
+      updateSubjectDropdowns();
+      renderSyllabusSubjectFilters();
       renderSyllabusDatabase();
       renderErrorLogger();
       updateTimerDisplays();
@@ -3312,6 +4505,7 @@
       calculateMarathonSplits();
       setInterval(updateDualCountdowns, 1000);
     });
+
   </script>
 
   <!-- PWA Service Worker Registration -->
